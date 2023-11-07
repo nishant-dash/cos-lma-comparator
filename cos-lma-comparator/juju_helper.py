@@ -89,6 +89,7 @@ class jujuHelper:
         unit = app.units[0]
         if action:
             action = await unit.run_action(command)
+            action = await action.wait()
             output = action.results
         else:
             action = await unit.run(command)
