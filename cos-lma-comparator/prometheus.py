@@ -1,5 +1,9 @@
 import json
 import requests
+import juju_helper
+
+from juju import jasyncio
+
 
 class PrometheusAlertRule():
     def __init__(self, rule):
@@ -14,8 +18,8 @@ class PrometheusAlertRule():
             self.command = self.query[37:].split('"')[1].strip()
         else:
             pass
-            #TODO log error
-    
+            # TODO log error
+
     def isNrpeRule(self):
         return self.name.endswith("NrpeAlert")
 
@@ -26,6 +30,7 @@ class PrometheusAlertRule():
             "unit": self.labels["juju_unit"],
             "model": self.labels["juju_model"]
         }
+
 
 def parse_rule(rule):
     rule = PrometheusAlertRule(rule)
@@ -41,7 +46,7 @@ def fetch_rules_raw(url):
 
     url: string - the prometheus endpoint without trailing slash, e.g. http://10.123.456.78:80/cos-prometheus-0
     '''
-    
+
     response = requests.get(url + "/api/v1/rules")
     if not response.ok:
         raise Exception("Unable to fetch rules from endpoint")
@@ -68,3 +73,26 @@ def parse(prom_raw):
         nrpes += [rule]
 
     return nrpes
+
+# proxied-endpoints: '{"prometheus/0": {"url": "http://10.169.129.59:80/cos-prometheus-0"},
+#      "loki/0": {"url": "http://10.169.129.59:80/cos-loki-0"}, "catalogue": {"url":
+#      "http://10.169.129.59:80/cos-catalogue"}, "alertmanager": {"url": "http://10.169.129.59:80/cos-alertmanager"}}
+def get_prometheus_data(args):
+    traefik_proxied_endpoints_action_raw = jasyncio.run(
+        juju_helper.connect_model_run_command(
+            controller_name=args.juju_controller,
+            model_name=args.juju_model,
+            user=args.juju_user,
+            app_name='traefik',
+            command='show-proxied-endpoints',
+            action=True,
+        )
+    )
+
+    traefik_proxied_endpoints_json = json.loads(
+        traefik_proxied_endpoints_action_raw['proxied-endpoints']
+    )
+
+    prometheus_metrics_json = fetch_rules_raw(traefik_proxied_endpoints_json['prometheus/0'])
+    return prometheus_metrics_json
+

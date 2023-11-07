@@ -1,16 +1,16 @@
-import json
+import juju_helper
 
-# juju run -u thruk-agent/leader -- thruk r '/services'
-with open('thruk-agent.services.json') as f:
-    raw_data = json.load(f)
+from juju import jasyncio
 
 
-rules = []
-for service in raw_data:
-    rules += [{
-        "unit": service['host_name'],
-        "name": service['host_check_command'],
-        "command": service['check_command'],
-    }]
-
-print(rules)
+def get_nagios_data(args):
+    nagios_services_json = jasyncio.run(
+        juju_helper.connect_model_run_command(
+            controller_name=args.juju_controller,
+            model_name=args.juju_model,
+            user=args.juju_user,
+            app_name='thruk-agent',
+            command='thruk r /services',
+        )
+    )
+    return nagios_services_json
