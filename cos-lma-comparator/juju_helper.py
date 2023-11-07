@@ -45,11 +45,13 @@ async def connect_model_get_config(
 
 
 async def connect_model_run_command(
+    self,
     controller_name='foundation-maas',
     model_name='lma-maas',
     user='admin',
     app_name='thruk-agent',
-    command='hostname'
+    command='hostname',
+    action=False
 ) -> dict:
     '''Connect to a juju controller and model as a user and get charm config
     information from charms that match the app_name regex.
@@ -64,6 +66,8 @@ async def connect_model_run_command(
     :type app_name: string
     :param commands: list of shell commands to run on a unit of the application
     :type commands: list
+    :param action: flag to consider command as juju run_action or juju run
+    :type action: bool
 
     :return: output of the command run against a unit of the application specified
     :rtype: string
@@ -77,9 +81,15 @@ async def connect_model_run_command(
     all_apps = model.applications
     app = all_apps[app_name]
     unit = app.units[0]
-    action = await unit.run(command)
-    output = action.results
+    if action:
+        action = await unit.run_action(command)
+        action = await action.wait()
+        output = action.results
+    else:
+        action = await unit.run(command)
+        output = action.results
+        output = output['Stdout']
 
     # cleanup
     await model.disconnect()
-    return output['Stdout']
+    return output
