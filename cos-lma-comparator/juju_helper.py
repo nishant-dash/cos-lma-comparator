@@ -45,7 +45,6 @@ async def connect_model_get_config(
 
 
 async def connect_model_run_command(
-    self,
     controller_name='foundation-maas',
     model_name='lma-maas',
     user='admin',

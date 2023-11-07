@@ -1,5 +1,6 @@
 import logging
 import argparse
+
 from prometheus import get_prometheus_data
 from nagios import get_nagios_data
 
