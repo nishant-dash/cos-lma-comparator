@@ -89,13 +89,15 @@ class jujuHelper:
         unit = app.units[0]
         if action:
             action = await unit.run_action(command)
+            output = action.results
+            output = output['Stdout']
         else:
             action = await unit.run(command)
-        output = action.results
+            output = action.results
 
         # cleanup
         await model.disconnect()
-        return output['Stdout']
+        return output
 
 
 
