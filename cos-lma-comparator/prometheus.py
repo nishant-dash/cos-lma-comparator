@@ -80,9 +80,9 @@ def parse(prom_raw):
 def get_prometheus_data(args):
     traefik_proxied_endpoints_action_raw = jasyncio.run(
         juju_helper.connect_model_run_command(
-            controller_name=args.juju_controller,
-            model_name=args.juju_model,
-            user=args.juju_user,
+            controller_name=args.juju_cos_controller,
+            model_name=args.juju_cos_model,
+            user=args.juju_cos_user,
             app_name='traefik',
             command='show-proxied-endpoints',
             action=True,
@@ -93,6 +93,6 @@ def get_prometheus_data(args):
         traefik_proxied_endpoints_action_raw['proxied-endpoints']
     )
 
+    # TODO Detect prometheus unit, could be something else such as prometheus/1
     prometheus_metrics_json = fetch_rules_raw(traefik_proxied_endpoints_json['prometheus/0'])
     return prometheus_metrics_json
-
