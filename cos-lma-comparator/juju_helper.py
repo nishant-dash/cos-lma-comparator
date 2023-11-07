@@ -56,7 +56,8 @@ class jujuHelper:
             model_name='lma-maas',
             user='admin',
             app_name='thruk-agent',
-            command='hostname'
+            command='hostname',
+            action=False
         ) -> dict:
         '''Connect to a juju controller and model as a user and get charm config
         information from charms that match the app_name regex.
@@ -71,6 +72,8 @@ class jujuHelper:
         :type app_name: string
         :param commands: list of shell commands to run on a unit of the application
         :type commands: list
+        :param action: flag to consider command as juju run_action or juju run
+        :type action: bool
 
         :return: output of the command run against a unit of the application specified
         :rtype: string
@@ -84,7 +87,10 @@ class jujuHelper:
         all_apps = model.applications
         app = all_apps[app_name]
         unit = app.units[0]
-        action = await unit.run(command)
+        if action:
+            action = await unit.run_action(command)
+        else:
+            action = await unit.run(command)
         output = action.results
 
         # cleanup
