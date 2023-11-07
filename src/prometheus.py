@@ -1,4 +1,5 @@
 import json
+import requests
 
 class PrometheusAlertRule():
     def __init__(self, rule):
@@ -32,19 +33,38 @@ def parse_rule(rule):
         rule.extractCommand()
         return rule.exportToComparator()
 
-with open('rules.json') as r:
-    rules_raw = json.load(r)
 
-rules = []
-for r in rules_raw["data"]["groups"]:
-    rules += r['rules']
+def fetch_rules_raw(url):
+    '''
+    Fetch the list of all rules from the Prometheus endpoint and return it as a
+    parsed dictionary.
 
-for r in rules:
-    rule = PrometheusAlertRule(r)
-    if rule.isNrpeRule():
-        print(rule.state)
+    url: string - the prometheus endpoint without trailing slash, e.g. http://10.123.456.78:80/cos-prometheus-0
+    '''
+    
+    response = requests.get(url + "/api/v1/rules")
+    if not response.ok:
+        raise Exception("Unable to fetch rules from endpoint")
 
-#for r in rules:
-#    data = parse_rule(r)
-#    if data:
-#        print(json.dumps(data, indent=2))
+    return response.json()
+
+def parse(prom_raw):
+    '''
+    Parse the raw dictionary from Prometheus and return a list of rules as
+    PrometheusAlertRule objects.
+
+    prom_raw - the json parsed input from the prometheus endpoint
+    '''
+
+    rules = []
+    for r in prom_raw["data"]["groups"]:
+        rules += r['rules']
+
+    nrpes = []
+    for r in rules:
+        rule = PrometheusAlertRule(r)
+        if not rule.isNrpeRule():
+            continue
+        nrpes += [rule]
+
+    return nrpes
