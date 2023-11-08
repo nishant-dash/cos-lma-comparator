@@ -30,7 +30,7 @@ async def connect_model_get_config(
     model = Model()
     await model.connect(f'{controller_name}:{user}/{model_name}')
 
-    # collect all nrpe applications
+    # collect all applications that match app name wildcard
     nrpe_config_info = {}
     all_apps = model.applications
     for k, v in all_apps.items():
@@ -75,10 +75,9 @@ async def connect_model_run_command(
     model = Model()
     await model.connect(f'{controller_name}:{user}/{model_name}')
 
-    # collect all nrpe applications
+    # get application object and pick first unit to run the command
     output = ""
-    all_apps = model.applications
-    app = all_apps[app_name]
+    app = model.applications[app_name]
     unit = app.units[0]
     if action:
         action = await unit.run_action(command)
@@ -88,6 +87,34 @@ async def connect_model_run_command(
         action = await unit.run(command)
         output = action.results
         output = output['Stdout']
+
+    # cleanup
+    await model.disconnect()
+    return output
+
+
+async def connect_model_get_status(
+    controller_name='foundation-maas',
+    model_name='lma-maas',
+    user='admin'
+) -> dict:
+    '''Connect to a juju controller and model as a user and get charm config
+    information from charms that match the app_name regex.
+
+    :param controller_name: name of the juju controller
+    :type controller_name: string
+    :param model_name: name of the juju model to connect to
+    :type model_name: string
+    :param user: name of the juju user that the commands are run against
+    :type user: string
+
+    :return: juju status output
+    :rtype: string
+    '''
+    # connect to a model and get status
+    model = Model()
+    await model.connect(f'{controller_name}:{user}/{model_name}')
+    output = await model.get_status()
 
     # cleanup
     await model.disconnect()

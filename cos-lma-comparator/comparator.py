@@ -1,7 +1,7 @@
 from rules import PrometheusClient
 from services import NagiosClient
 
-nagios_host_context = "bootstack-***REMOVED***-***REMOVED***"
+nagios_host_context = "bootstack-a-b"
 
 prom_data = PrometheusClient()
 nagios_data = NagiosClient(nagios_host_context)
