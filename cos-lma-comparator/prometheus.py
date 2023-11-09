@@ -4,6 +4,8 @@ import juju_helper
 
 from juju import jasyncio
 
+from structures import NRPEData
+
 
 class PrometheusAlertRule():
     def __init__(self, rule):
@@ -14,29 +16,25 @@ class PrometheusAlertRule():
         return json.dumps(self.__dict__, indent=2)
 
     def extractCommand(self):
-        if self.query.startswith("avg_over_time(command_status{command="):
-            self.command = self.query[37:].split('"')[1].strip()
+        prefix = "avg_over_time(command_status{command="
+        if self.query.startswith(prefix):
+            self.command = self.query[len(prefix):].split('"')[1].strip()
         else:
             pass
             # TODO log error
+            raise Exception("TODO: This should log an error. Could not parse command from prometheus output: {}".format(self.query))
 
     def isNrpeRule(self):
         return self.name.endswith("NrpeAlert")
 
     def exportToComparator(self):
-        return {
-            "name": self.name,
-            "command": self.command,
-            "unit": self.labels["juju_unit"],
-            "model": self.labels["juju_model"]
-        }
-
-
-def parse_rule(rule):
-    rule = PrometheusAlertRule(rule)
-    if rule.isNrpeRule():
-        rule.extractCommand()
-        return rule.exportToComparator()
+        return NRPEData(
+            juju_unit = self.labels["juju_unit"],
+            juju_model = self.labels["juju_model"],
+            alert_state = 42,
+            alert_check_name = self.command,
+            alert_time = 0,
+        )
 
 
 def fetch_rules_raw(url):
@@ -70,14 +68,13 @@ def parse(prom_raw):
         rule = PrometheusAlertRule(r)
         if not rule.isNrpeRule():
             continue
-        nrpes += [rule]
+        rule.extractCommand()
+        nrpes += [rule.exportToComparator()]
 
     return nrpes
 
-# proxied-endpoints: '{"prometheus/0": {"url": "http://10.169.129.59:80/cos-prometheus-0"},
-#      "loki/0": {"url": "http://10.169.129.59:80/cos-loki-0"}, "catalogue": {"url":
-#      "http://10.169.129.59:80/cos-catalogue"}, "alertmanager": {"url": "http://10.169.129.59:80/cos-alertmanager"}}
-def get_prometheus_data(args):
+
+def get_prometheus_url(args):
     traefik_proxied_endpoints_action_raw = jasyncio.run(
         juju_helper.connect_model_run_command(
             controller_name=args.juju_cos_controller,
@@ -93,6 +90,22 @@ def get_prometheus_data(args):
         traefik_proxied_endpoints_action_raw['proxied-endpoints']
     )
 
-    # TODO Detect prometheus unit, could be something else such as prometheus/1
-    prometheus_metrics_json = fetch_rules_raw(traefik_proxied_endpoints_json['prometheus/0'])
-    return prometheus_metrics_json
+    for k,v in traefik_proxied_endpoints_json.items():
+        if k.startswith("prometheus"):
+            return v["url"]
+
+    raise Exception("Unable to find URL for prometheus in traefik endpoints")
+
+
+def get_prometheus_data(args):
+    if args.prometheus_url is None:
+       url = get_prometheus_url(args)
+    else:
+       url = args.prometheus_url
+    # url = "http://10.169.129.59:80/cos-prometheus-0"
+    
+    prometheus_metrics_json = fetch_rules_raw(url)
+    
+    rules = parse(prometheus_metrics_json)
+
+    return rules
