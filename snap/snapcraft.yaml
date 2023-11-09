@@ -1,0 +1,45 @@
+name: cos-lma-comparator
+base: core22
+adopt-info: cos-lma-comparator
+summary: Tool to compare nrpe data between LMA and COS
+license: AGPL-3.0
+description: |
+  This tool aims to provide a means to compare alert presence and completeness
+  between the old LMA stack and the newer COS stack.
+
+grade: devel
+confinement: strict
+
+apps:
+  cos-lma-comparator:
+    command: bin/cos-lma-comparator.wrapper
+#    completer: etc/bash_completion.d/snap.cos-lma-comparator
+    plugs:
+      - juju-client-observe
+      - network
+      - network-bind
+
+parts:
+  cos-lma-comparator-wrapper:
+    plugin: dump
+    source: bin
+    organize:
+      cos-lma-comparator.wrapper: bin/cos-lma-comparator.wrapper
+
+  cos-lma-comparator:
+    plugin: python
+    build-packages:
+      - python3-wheel
+      - python3-pip
+      - python3-setuptools-scm
+    source: .
+    stage-packages:
+      - git
+    override-build: |
+      craftctl default
+      set -e
+
+      # set version
+      VERSION=$(python3 setup.py --version)
+      echo "Version: ${VERSION}"
+      craftctl set version=${VERSION}
