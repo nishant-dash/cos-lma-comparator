@@ -18,6 +18,8 @@ apps:
       - juju-client-observe
       - network
       - network-bind
+      - ssh-public-keys
+      - dot-local-share-juju
 
 parts:
   clc-wrapper:
@@ -43,3 +45,9 @@ parts:
       VERSION=$(python3 setup.py --version)
       echo "Version: ${VERSION}"
       craftctl set version=${VERSION}
+
+plugs:
+  dot-local-share-juju:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/juju
