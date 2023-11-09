@@ -24,7 +24,7 @@ parts:
     plugin: dump
     source: bin
     organize:
-      cos-lma-comparator.wrapper: bin/clc.wrapper
+      clc.wrapper: bin/clc.wrapper
 
   clc:
     plugin: python
