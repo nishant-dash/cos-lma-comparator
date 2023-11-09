@@ -51,7 +51,7 @@ def parser():
     return parser
 
 
-if __name__ == "__main__":
+def main():
     args = parser().parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
@@ -68,3 +68,6 @@ if __name__ == "__main__":
     prometheus_rules = PrometheusRules(prometheus_rules_json)
 
     compare(nagios_services.alerts(), prometheus_rules.alerts())
+
+if __name__ == "__main__":
+    main()
