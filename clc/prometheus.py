@@ -9,12 +9,12 @@ from .utils.structures import NRPEData
 
 class PrometheusRule(NRPEData):
     def __init__(self, prometheus_rule_json):
-        super().__init__(self, prometheus_rule_json)
+        super().__init__(self)
+
+        self.set_json(prometheus_rule_json)
 
         self.juju_model = self._labels.get("juju_model", None)
         self.juju_unit = self._labels.get("juju_unit", None)
-        # self.alert_state = None
-        # self.alert_time = None
 
         if self.is_nrpe_rule():
             self.alert_check_name = self.__extract_command()
@@ -23,7 +23,7 @@ class PrometheusRule(NRPEData):
         return json.dumps(self.__dict__, indent=2)
 
     def __extract_command(self):
-        extract_command = re.search('command=\"(\w+)\",', self._query)
+        extract_command = re.search('command=\"([^"]+)\",', self._query)
         if extract_command:
             return extract_command.group(1)
         else:
@@ -41,12 +41,14 @@ class PrometheusRules:
 
         prom_raw - the json parsed input from the prometheus endpoint
         '''
-        self._alerts = set()
+        self._alerts = []
 
-        for r in prometheus_rules_json["data"]["groups"]:
-            nrpe_data = PrometheusRule(r['rules'])
-            if nrpe_data.is_nrpe_rule():
-                self._alerts.append(nrpe_data)
+
+        for groups in prometheus_rules_json["data"]["groups"]:
+            for r in groups['rules']:
+                nrpe_data = PrometheusRule(r)
+                if nrpe_data.is_nrpe_rule():
+                    self._alerts.append(nrpe_data)
 
     def alerts(self):
         return set(self._alerts)

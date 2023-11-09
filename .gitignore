@@ -42,3 +42,4 @@ dist/
 .build/
 build/
 
+tests/test_data/*

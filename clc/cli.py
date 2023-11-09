@@ -7,7 +7,6 @@ from .nagios import get_nagios_data
 from . import comparator
 
 
-
 def parser():
     parser = argparse.ArgumentParser(
         description='COS LMA Completeness checker',
@@ -64,7 +63,7 @@ def main():
     logging.debug(nagios_services_json)
 
     prometheus_rules_json = get_prometheus_data(args)
-    logging.debug(prometheus_alerts_json)
+    logging.debug(prometheus_rules_json)
 
     nagios_services = NagiosServices(nagios_services_json)
     prometheus_rules = PrometheusRules(prometheus_rules_json)
