@@ -3,8 +3,8 @@ import re
 import requests
 from juju import jasyncio
 
-import juju_helper
-from structures import NRPEData
+from .utils import juju_helper
+from .utils.structures import NRPEData
 
 
 class PrometheusRule(NRPEData):

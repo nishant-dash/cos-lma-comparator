@@ -1,4 +1,4 @@
-import juju_helper
+from .utils import juju_helper
 
 from juju import jasyncio
 
