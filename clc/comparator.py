@@ -55,5 +55,35 @@ def compare(left_alerts, right_alerts):
     }
 
 
+def summary(alerts):
+    """
+    Summary of the alerts given.
 
+    Output:
+      - number of applications
+      - number of units
+      - number of rules
+      - number of rules in error
+    """
+
+    def app_name(alert):
+        # Note: an app name is determined from its unit name. However, it is also
+        # distinguished by the model that it is in.
+        app_part = alert.juju_unit.split("/")
+        return "{}:{}".format(alert.juju_model, app_part)
+
+    unique_apps = set(app_name(x) for x in alerts)
+
+    # The unit name needs to be distinguished by the model as well
+    unique_units = set("{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts)
+
+    rules_in_error = [x for x in alerts if x.alert_state != 0]
+
+
+    return {
+        "num_apps": len(unique_apps),
+        "num_units": len(unique_units),
+        "num_rules": len(alerts),
+        "num_rules_alerting": len(rules_in_error),
+    }
 

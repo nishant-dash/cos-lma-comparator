@@ -4,6 +4,8 @@ import argparse
 from .prometheus import get_prometheus_data
 from .nagios import get_nagios_data
 
+from . import comparator
+
 
 
 def parser():
@@ -67,7 +69,10 @@ def main():
     nagios_services = NagiosServices(nagios_services_json)
     prometheus_rules = PrometheusRules(prometheus_rules_json)
 
-    compare(nagios_services.alerts(), prometheus_rules.alerts())
+    diff_output = comparator.compare(nagios_services.alerts(), prometheus_rules.alerts())
+    summary = comparator.summary(nagios_services.alerts())
+
+    # TODO: Pretty print or json output
 
 if __name__ == "__main__":
     main()
