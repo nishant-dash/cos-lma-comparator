@@ -11,7 +11,7 @@ class NRPEData:
     alert_state: int # Maybe str?
     alert_time: float # Unix time
 
-    def __init__(self, raw_alert_json):
+    def set_json(self, raw_alert_json):
         for k, v in raw_alert_json.items():
             setattr(self, "_" + k, v)
 
