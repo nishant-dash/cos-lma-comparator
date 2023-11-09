@@ -1,8 +1,8 @@
 import json
 import requests
-#import juju_helper
+import juju_helper
 
-#from juju import jasyncio
+from juju import jasyncio
 
 from comparator import NRPEData
 
@@ -99,19 +99,13 @@ def get_prometheus_url(args):
 
 def get_prometheus_data(args):
     if args.prometheus_url is None:
-        url = get_prometheus_url(args)
+       url = get_prometheus_url(args)
     else:
-        url = args.prometheus_url
-    #url = "http://10.169.129.59:80/cos-prometheus-0"
+       url = args.prometheus_url
+    # url = "http://10.169.129.59:80/cos-prometheus-0"
     
-    # TODO Detect prometheus unit, could be something else such as prometheus/1
     prometheus_metrics_json = fetch_rules_raw(url)
     
     rules = parse(prometheus_metrics_json)
 
     return rules
-
-
-if __name__ == "__main__":
-    out = get_prometheus_data(None)
-    print(out)
