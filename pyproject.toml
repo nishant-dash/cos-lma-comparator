@@ -82,6 +82,12 @@ omit = ["tests/**", "docs/**", "lib/**", "snap/**", "build/**", "setup.py"]
 fail_under = 100
 show_missing = true
 
+[tool.coverage.html]
+directory = "tests/unit/report/html"
+
+[tool.coverage.xml]
+output = "tests/unit/report/coverage.xml"
+
 [tool.codespell]
 skip = ".eggs,.tox,.git,.venv,venv,build,.build,lib,report"
 quiet-level = 3
