@@ -2,7 +2,7 @@ from juju.model import Model
 
 
 async def connect_model_get_config(
-    controller_name='foundation-maas',
+    controller_name='foundations-maas',
     model_name='lma-maas',
     user='admin',
     app_name='nrpe',
@@ -45,7 +45,7 @@ async def connect_model_get_config(
 
 
 async def connect_model_run_command(
-    controller_name='foundation-maas',
+    controller_name='foundations-maas',
     model_name='lma-maas',
     user='admin',
     app_name='thruk-agent',
@@ -94,7 +94,7 @@ async def connect_model_run_command(
 
 
 async def connect_model_get_status(
-    controller_name='foundation-maas',
+    controller_name='foundations-maas',
     model_name='lma-maas',
     user='admin'
 ) -> dict:
