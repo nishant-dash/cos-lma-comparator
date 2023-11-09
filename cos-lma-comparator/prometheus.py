@@ -1,43 +1,58 @@
 import json
+import re
 import requests
-import juju_helper
-
 from juju import jasyncio
 
+import juju_helper
 from structures import NRPEData
 
 
-class PrometheusAlertRule():
-    def __init__(self, rule):
-        for k, v in rule.items():
-            setattr(self, k, v)
+class PrometheusRule(NRPEData):
+    def __init__(self, prometheus_rule_json):
+        super().__init__(self, prometheus_rule_json)
+
+        self.juju_model = self._labels.get("juju_model", None)
+        self.juju_unit = self._labels.get("juju_unit", None)
+        # self.alert_state = None
+        # self.alert_time = None
+
+        if self.is_nrpe_rule():
+            self.alert_check_name = self.__extract_command()
 
     def __str__(self):
         return json.dumps(self.__dict__, indent=2)
 
-    def extractCommand(self):
-        prefix = "avg_over_time(command_status{command="
-        if self.query.startswith(prefix):
-            self.command = self.query[len(prefix):].split('"')[1].strip()
+    def __extract_command(self):
+        extract_command = re.search('command=\"(\w+)\",', self._query)
+        if extract_command:
+            return extract_command.group(1)
         else:
-            pass
-            # TODO log error
-            raise Exception("TODO: This should log an error. Could not parse command from prometheus output: {}".format(self.query))
+            raise Exception("Could not parse command from prometheus output: {}".format(self._query))
 
-    def isNrpeRule(self):
-        return self.name.endswith("NrpeAlert")
-
-    def exportToComparator(self):
-        return NRPEData(
-            juju_unit = self.labels["juju_unit"],
-            juju_model = self.labels["juju_model"],
-            alert_state = 42,
-            alert_check_name = self.command,
-            alert_time = 0,
-        )
+    def is_nrpe_rule(self):
+        return self._name.endswith("NrpeAlert")
 
 
-def fetch_rules_raw(url):
+class PrometheusRules:
+    def __init__(self, prometheus_rules_json):
+        '''
+        Parse the raw dictionary from Prometheus and return a list of rules as
+        PrometheusAlertRule objects.
+
+        prom_raw - the json parsed input from the prometheus endpoint
+        '''
+        self._alerts = set()
+
+        for r in prometheus_rules_json["data"]["groups"]:
+            nrpe_data = PrometheusRule(r['rules'])
+            if nrpe_data.is_nrpe_rule():
+                self._alerts.append(nrpe_data)
+
+    def alerts(self):
+        return set(self._alerts)
+
+
+def fetch_prometheus_json(url):
     '''
     Fetch the list of all rules from the Prometheus endpoint and return it as a
     parsed dictionary.
@@ -50,28 +65,6 @@ def fetch_rules_raw(url):
         raise Exception("Unable to fetch rules from endpoint")
 
     return response.json()
-
-def parse(prom_raw):
-    '''
-    Parse the raw dictionary from Prometheus and return a list of rules as
-    PrometheusAlertRule objects.
-
-    prom_raw - the json parsed input from the prometheus endpoint
-    '''
-
-    rules = []
-    for r in prom_raw["data"]["groups"]:
-        rules += r['rules']
-
-    nrpes = []
-    for r in rules:
-        rule = PrometheusAlertRule(r)
-        if not rule.isNrpeRule():
-            continue
-        rule.extractCommand()
-        nrpes += [rule.exportToComparator()]
-
-    return nrpes
 
 
 def get_prometheus_url(args):
@@ -90,7 +83,7 @@ def get_prometheus_url(args):
         traefik_proxied_endpoints_action_raw['proxied-endpoints']
     )
 
-    for k,v in traefik_proxied_endpoints_json.items():
+    for k, v in traefik_proxied_endpoints_json.items():
         if k.startswith("prometheus"):
             return v["url"]
 
@@ -99,13 +92,7 @@ def get_prometheus_url(args):
 
 def get_prometheus_data(args):
     if args.prometheus_url is None:
-       url = get_prometheus_url(args)
+        url = get_prometheus_url(args)
     else:
-       url = args.prometheus_url
-    # url = "http://10.169.129.59:80/cos-prometheus-0"
-    
-    prometheus_metrics_json = fetch_rules_raw(url)
-    
-    rules = parse(prometheus_metrics_json)
-
-    return rules
+        url = args.prometheus_url
+    return fetch_prometheus_json(url)
