@@ -20,4 +20,6 @@ class NRPEData:
         Export a tuple with the fields that are identifiers and should be
         unique amongst all alerts from this monitoring service.
         """
-        return (self.juju_model, self.juju_unit, self.alert_check_name)
+        #return (self.juju_model, self.juju_unit, self.alert_check_name)
+        # For now - we have no juju_model in nagios so set it to None here
+        return (None, self.juju_unit, self.alert_check_name)
