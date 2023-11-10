@@ -50,6 +50,10 @@ def parser():
                         action='store_true',
                         default=False,
                         help='Enable verbose output')
+
+    parser.add_argument('--long',
+                        action='store_true',
+                        help="Don't shorten the list of alerts")
     return parser
 
 

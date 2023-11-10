@@ -1,9 +1,15 @@
 
+TRUNCATE_THRESHOLD = 20
+
 def list_rules(alerts, args):
     if args.format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
-    for alert in alerts:
-        print("Alert {}".format(alert.definition()))
+
+    print_truncatable_list(
+        alerts,
+        lambda alert: print("Alert {}".format(alert.definition())),
+        args
+    )
 
 def show_diff(diff_output, args):
     if args.format != "plain":
@@ -11,20 +17,29 @@ def show_diff(diff_output, args):
 
     print("Rules missing from prometheus")
     print("=============================")
-    for alert in diff_output["missing_alerts"]:
-        print(alert)
+    print_truncatable_list(
+        sorted(diff_output["missing_alerts"]),
+        lambda alert: print(alert),
+        args
+    )
     print()
 
     print("Extra rules in prometheus not present in nagios")
     print("===============================================")
-    for alert in diff_output["extra_alerts"]:
-        print(alert)
+    print_truncatable_list(
+        sorted(diff_output["extra_alerts"]),
+        lambda alert: print(alert),
+        args
+    )
     print()
 
     print("Alerts with different alert status")
     print("==================================")
-    for output in diff_output["disagreements"]:
-        print(output)
+    print_truncatable_list(
+        sorted(diff_output["disagreements"]),
+        lambda output: print(output),
+        args
+    )
     print()
 
 def show_summary(summary, args):
@@ -32,3 +47,19 @@ def show_summary(summary, args):
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
     print(summary)
+
+
+
+
+def print_truncatable_list(l, print_func, args):
+    truncate_amount = int(TRUNCATE_THRESHOLD/2)
+    if not args.long and len(l) > TRUNCATE_THRESHOLD:
+        for item in l[:truncate_amount]:
+            print_func(item)
+        print("..... {} rules omitted .....".format(len(l) - truncate_amount*2))
+        for item in l[-truncate_amount:]:
+            print_func(item)
+    else:
+        for item in l:
+            print_func(item)
+    
