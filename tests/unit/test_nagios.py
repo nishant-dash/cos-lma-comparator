@@ -10,8 +10,9 @@ def nagios_services_json():
 
 
 def test_nagios_service(nagios_services_json):
-    service = nagios_services_json[0]
-    assert NagiosService(service, "bootstack-abc-defg")
+    service = NagiosService(nagios_services_json[0], "bootstack-abc-defg")
+    assert service.juju_unit == "aodh/0"
+    assert service.alert_check_name == "check-host-alive"
 
 
 def test_nagios(nagios_services_json):

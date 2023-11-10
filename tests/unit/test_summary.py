@@ -1,5 +1,3 @@
-import pytest
-
 from clc.comparator import summary
 from clc.utils.structures import NRPEData
 
@@ -22,6 +20,3 @@ def test_summary():
     print(output)
     expected_output = {'num_apps': 5, 'num_rules': 7, 'num_rules_alerting': 3, 'num_units': 5}
     assert output == expected_output
-
-if __name__ == "__main__":
-    test_summary()

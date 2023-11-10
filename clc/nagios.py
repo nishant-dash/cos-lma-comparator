@@ -27,6 +27,9 @@ class NagiosService(NRPEData):
         else:
             return self._host_display_name
 
+    def __extract_check_command(self):
+        return
+
     def __extract_app_name(self):
         if self.juju_unit:
             return self.juju_unit.split("/")[0]

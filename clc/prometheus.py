@@ -14,7 +14,7 @@ class PrometheusRule(NRPEData):
         self.set_json(prometheus_rule_json)
 
         self.juju_model = self._labels.get("juju_model", None)
-        self.juju_unit = self._labels.get("juju_unit", None)
+        self.juju_unit = self._labels.get("nrpe_unit", None)
 
         if self.is_nrpe_rule():
             self.alert_check_name = self.__extract_command()

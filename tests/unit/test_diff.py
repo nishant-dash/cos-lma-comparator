@@ -1,4 +1,4 @@
-import pytest 
+import pytest
 
 from clc.comparator import compare
 from clc.utils.structures import NRPEData
@@ -36,7 +36,7 @@ def test_compare():
         alert4b,
     ]
 
-    # We should get assertion error when there's a duplicate 
+    # We should get assertion error when there's a duplicate
     with pytest.raises(AssertionError):
         compare(left_alerts + [alert1repeat], right_alerts)
     with pytest.raises(AssertionError):
@@ -55,6 +55,3 @@ def test_compare():
             "right_time": alert4b.alert_time,
     } ]
     assert output["disagreements"] == expected_disagreements
-
-if __name__ == "__main__":
-    test_compare()
