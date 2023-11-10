@@ -71,6 +71,26 @@ def fetch_prometheus_json(url):
     return response.json()
 
 
+def get_prometheus_url(args):
+    traefik_proxied_endpoints_action_raw = juju_helper.juju_run_action(
+            controller_name=args.juju_cos_controller,
+            model_name=args.juju_cos_model,
+            user=args.juju_cos_user,
+            app_name='traefik',
+            command='show-proxied-endpoints'
+    )
+
+    traefik_proxied_endpoints_json = json.loads(
+        traefik_proxied_endpoints_action_raw['proxied-endpoints']
+    )
+
+    for k, v in traefik_proxied_endpoints_json.items():
+        if k.startswith("prometheus"):
+            return v["url"]
+
+    raise Exception("Unable to find URL for prometheus in traefik endpoints")
+
+
 def get_prometheus_data(args):
     if args.prometheus_url is None:
         url = get_prometheus_url()

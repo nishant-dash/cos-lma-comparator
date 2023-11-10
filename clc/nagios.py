@@ -44,13 +44,11 @@ class NagiosServices:
 
 
 def get_nagios_data(args):
-    nagios_services_json = jasyncio.run(
-        juju_helper.connect_model_run_command(
-            controller_name=args.juju_lma_controller,
-            model_name=args.juju_lma_model,
-            user=args.juju_lma_user,
-            app_name='thruk-agent',
-            command='thruk r /services',
-        )
+    nagios_services_json = juju_helper.juju_ssh(
+        controller_name=args.juju_lma_controller,
+        model_name=args.juju_lma_model,
+        user=args.juju_lma_user,
+        app_name='thruk-agent',
+        command='sudo thruk r /services',
     )
     return nagios_services_json
