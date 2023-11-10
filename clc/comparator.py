@@ -87,8 +87,13 @@ def identify_duplicates(alerts):
     print("==============")
     for k,v in d.items():
         print(k, "has duplicates:")
-        for alert in v:
-            print(" -> ", alert)
+        # Check to see if everything is identical
+        if all(vi == v[0] for vi in v):
+            print("ALL VALUES (n={}) ARE IDENTICAL IN THEIR DETAIL... WTF???".format(len(v)))
+            print(v[0])
+        else:
+            for alert in v:
+                print(" -> ", alert)
         print()
 
 
