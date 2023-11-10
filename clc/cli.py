@@ -1,8 +1,8 @@
 import logging
 import argparse
 
-from .nagios import get_nagios_data
 from .prometheus import get_prometheus_data, PrometheusRules
+from .nagios import get_nagios_data, NagiosServices
 from . import display
 
 from . import comparator
@@ -54,6 +54,13 @@ def parser():
     parser.add_argument('--long',
                         action='store_true',
                         help="Don't shorten the list of alerts")
+
+    parser.add_argument('--nagios-prefix',
+                        default='',
+                        help='Hardcode for debug')
+    parser.add_argument('--host-display-name',
+                        default='',
+                        help='Hardcode for debug')
     return parser
 
 

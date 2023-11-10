@@ -1,5 +1,5 @@
 import json
-from juju import jasyncio
+#from juju import jasyncio
 
 from .utils import juju_helper
 from .utils.structures import NRPEData
@@ -39,15 +39,35 @@ class NagiosServices:
         for service in nagios_services_json:
             self._alerts.append(NagiosService(service, nagios_context))
 
+    def alerts(self):
+        return list(self._alerts)
+
+
+
+from subprocess import check_output, DEVNULL
+import shlex
+import json
+
+def json_call(command):
+    raw = check_output(shlex.split(command), stderr=DEVNULL)
+    j = json.loads(raw)
+    return j    
 
 def get_nagios_data(args):
-    nagios_services_json = jasyncio.run(
-        juju_helper.connect_model_run_command(
-            controller_name=args.juju_lma_controller,
-            model_name=args.juju_lma_model,
-            user=args.juju_lma_user,
-            app_name='thruk-agent',
-            command='thruk r /services',
-        )
-    )
-    return nagios_services_json
+    j = json_call("juju controllers --format json")
+    controllers = list(j["controllers"].keys())
+    
+    for c in controllers:
+        j = json_call("juju models --controller {} --format json".format(c))
+        models = [x["name"] for x in j["models"]]
+
+        for m in models:
+            j = json_call("juju status --model {}:{} --format json".format(c,m))
+            if "thruk-agent" in j["applications"]:
+                # This is what we want
+                j = json_call("juju exec --format json -m {}:{} --unit thruk-agent/0 -- sudo thruk r /services".format(c,m))
+                output = j[0]["stdout"]
+
+                data = json.loads(output)
+                return data
+    raise Exception("Couldn't find model")
