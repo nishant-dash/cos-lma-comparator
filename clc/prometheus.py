@@ -1,7 +1,6 @@
 import json
 import re
 import requests
-#from juju import jasyncio
 
 from .utils import juju_helper
 from .utils.structures import NRPEData
@@ -25,6 +24,7 @@ class PrometheusRule(NRPEData):
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)
         if extract_command:
+
             return extract_command.group(1)
         else:
             raise Exception("Could not parse command from prometheus output: {}".format(self._query))
@@ -42,7 +42,6 @@ class PrometheusRules:
         prom_raw - the json parsed input from the prometheus endpoint
         '''
         self._alerts = []
-
 
         for group in prometheus_rules_json["data"]["groups"]:
             for r in group['rules']:
@@ -80,8 +79,9 @@ def get_prometheus_url(args):
             command='show-proxied-endpoints'
     )
 
+    first_key = list(traefik_proxied_endpoints_action_raw.keys())[0]
     traefik_proxied_endpoints_json = json.loads(
-        traefik_proxied_endpoints_action_raw['proxied-endpoints']
+        traefik_proxied_endpoints_action_raw[first_key]['results']['proxied-endpoints']
     )
 
     for k, v in traefik_proxied_endpoints_json.items():
@@ -97,36 +97,3 @@ def get_prometheus_data(args):
     else:
         url = args.prometheus_url
     return fetch_prometheus_json(url)
-
-
-
-from subprocess import check_output, DEVNULL
-import shlex
-import json
-
-def json_call(command):
-    raw = check_output(shlex.split(command), stderr=DEVNULL)
-    j = json.loads(raw)
-    return j    
-
-def get_prometheus_url():
-    j = json_call("juju controllers --format json")
-    controllers = list(j["controllers"].keys())
-    
-    for c in controllers:
-        j = json_call("juju models --controller {} --format json".format(c))
-        models = [x["name"] for x in j["models"]]
-
-        for m in models:
-            j = json_call("juju status --model {}:{} --format json".format(c,m))
-            if "prometheus" in j["applications"] and "traefik" in j["applications"]:
-                # This is what we want
-                j = json_call("juju run-action --format json -m {}:{} --wait traefik/leader show-proxied-endpoints".format(c,m))
-                only_item = list(j.values())[0]
-                endpoints_raw = only_item["results"]["proxied-endpoints"]
-                endpoints = json.loads(endpoints_raw)
-
-                for endpoint in endpoints:
-                    if endpoint.startswith("prometheus"):
-                        return endpoints[endpoint]["url"]
-    raise Exception("Couldn't find url")

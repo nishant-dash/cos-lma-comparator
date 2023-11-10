@@ -1,11 +1,8 @@
 import subprocess as sp
-from uuid import uuid4 as uid
-import json
 import yaml
-import sys
-
 
 JUJU = "/snap/bin/juju"
+
 
 # function to query charmhub with juju to get version numbers for apps
 def juju_ssh(
@@ -15,7 +12,7 @@ def juju_ssh(
     app_name="thruk-agent",
     command="hostname",
     juju_version="2.9"
-    ):
+):
     if juju_version.startswith("2"):
         JUJU = "/snap/bin/juju"
     elif juju_version.startswith("3"):
@@ -42,6 +39,7 @@ def juju_ssh(
     #     print(error)
     return output.stdout
 
+
 def juju_run_action(
     controller_name="foundations-maas",
     model_name="lma-maas",
@@ -49,7 +47,7 @@ def juju_run_action(
     app_name="thruk-agent",
     command=None,
     juju_version="2.9"
-    ):
+):
     if juju_version.startswith("2"):
         JUJU = "/snap/bin/juju"
         run_action_cmd = ["run-action", "--wait"]
@@ -78,20 +76,3 @@ def juju_run_action(
         print(error)
         output_yaml = None
     return output_yaml
-
-
-if __name__ == '__main__':
-    nagios_services_json = juju_ssh(app_name='thruk-agent', command='sudo thruk r /services')
-    print(json.loads(nagios_services_json))
-
-    traefik_proxied_endpoints_action_raw = juju_run_action(
-            controller_name="microk8s-controller",
-            model_name="cos",
-            app_name='traefik',
-            command='show-proxied-endpoints'
-    )
-    first_key = list(traefik_proxied_endpoints_action_raw.keys())[0]
-    traefik_proxied_endpoints_json = json.loads(
-        traefik_proxied_endpoints_action_raw[first_key]['results']['proxied-endpoints']
-    )
-    print(traefik_proxied_endpoints_json)
