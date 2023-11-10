@@ -1,45 +1,53 @@
 import json
+from juju import jasyncio
 
 from .utils import juju_helper
 from .utils.structures import NRPEData
 
 
 class NagiosService(NRPEData):
-    def __init__(self, sc, context):
-        self.nagios_context = context
-        self.__extractUnitName()
+    def __init__(self, nagios_service_json, nagios_context=None):
+        super().__init__(self)
+        self.set_json(nagios_service_json)
+
+        self.nagios_context = nagios_context
+
+        self.juju_unit = self.__extract_unit_name()
+        self.alert_check_name = self._host_check_command
 
     def __str__(self):
         return json.dumps(self.__dict__, indent=2)
 
-    def __haveMatchingContext(self):
-        return self.host_display_name.startswith(self.nagios_context)
+    def __context_match(self):
+        return self._host_display_name.startswith(self.nagios_context)
 
-    def __extractUnitName(self):
-        if self.__haveMatchingContext():
-            self.juju_unit = self.host_display_name[len(self.nagios_context)+1:].replace("-", "/")
+    def __extract_unit_name(self):
+        if self.__context_match():
+            return self._host_display_name[len(self.nagios_context)+1:].replace("-", "/")
         else:
-            self.juju_unit = None
+            return self._host_display_name
 
-    def __extractAppName(self):
+    def __extract_app_name(self):
         if self.juju_unit:
-            self.app_name = self.juju_unit.splint("/")[0]
+            return self.juju_unit.split("/")[0]
 
 
 class NagiosServices:
-    def __init__(self, nagios_services_json):
-        self._alerts = set()
+    def __init__(self, nagios_services_json, nagios_context=None):
+        self._alerts = []
 
-        for r in nagios_services_json:
-            self._alerts.append(NagiosService(r))
+        for service in nagios_services_json:
+            self._alerts.append(NagiosService(service, nagios_context))
 
 
 def get_nagios_data(args):
-    nagios_services_json = juju_helper.juju_ssh(
+    nagios_services_json = jasyncio.run(
+        juju_helper.connect_model_run_command(
             controller_name=args.juju_lma_controller,
             model_name=args.juju_lma_model,
             user=args.juju_lma_user,
             app_name='thruk-agent',
             command='thruk r /services',
         )
+    )
     return nagios_services_json
