@@ -70,16 +70,13 @@ def fetch_prometheus_json(url):
 
 
 def get_prometheus_url(args):
-    traefik_proxied_endpoints_action_raw = jasyncio.run(
-        juju_helper.connect_model_run_command(
+    traefik_proxied_endpoints_action_raw = juju_helper.juju_run_action(
             controller_name=args.juju_cos_controller,
             model_name=args.juju_cos_model,
             user=args.juju_cos_user,
             app_name='traefik',
-            command='show-proxied-endpoints',
-            action=True,
+            command='show-proxied-endpoints'
         )
-    )
 
     traefik_proxied_endpoints_json = json.loads(
         traefik_proxied_endpoints_action_raw['proxied-endpoints']

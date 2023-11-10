@@ -55,9 +55,9 @@ def parser():
 def main():
     args = parser().parse_args()
 
-    logging.basicConfig(level=logging.DEBUG)
-    ws_logger = logging.getLogger('websockets.protocol')
-    ws_logger.setLevel(logging.INFO)
+    #logging.basicConfig(level=logging.DEBUG)
+    #ws_logger = logging.getLogger('websockets.protocol')
+    #ws_logger.setLevel(logging.INFO)
 
     nagios_services_json = get_nagios_data(args)
     logging.debug(nagios_services_json)
