@@ -9,8 +9,8 @@ JUJU = "/snap/bin/juju"
 
 # function to query charmhub with juju to get version numbers for apps
 def juju_ssh(
-    controller="foundations-maas",
-    model="lma-maas",
+    controller_name="foundations-maas",
+    model_name="lma-maas",
     user="admin",
     app_name="thruk-agent",
     command="hostname",
@@ -29,7 +29,7 @@ def juju_ssh(
         JUJU, 
         "ssh", 
         "-m", 
-        f"{controller}:{user}/{model}", 
+        f"{controller_name}:{user}/{model_name}", 
         f"{app_name}/leader", 
         " -- ", 
         command
@@ -43,11 +43,11 @@ def juju_ssh(
     return output.stdout
 
 def juju_run_action(
-    controller="foundations-maas",
-    model="lma-maas",
+    controller_name="foundations-maas",
+    model_name="lma-maas",
     user="admin",
-    app_name="thruk-agent"
-    command, 
+    app_name="thruk-agent",
+    command=None,
     juju_version="2.9"
     ):
     if juju_version.startswith("2"):
@@ -63,7 +63,7 @@ def juju_run_action(
     cmd = [JUJU] + run_action_cmd
     cmd += [
         "-m", 
-        f"{controller}:{user}/{model}", 
+        f"{controller_name}:{user}/{model_name}", 
         f"{app_name}/leader", 
         " -- ", 
         command
