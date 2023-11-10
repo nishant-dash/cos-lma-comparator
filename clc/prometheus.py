@@ -44,9 +44,11 @@ class PrometheusRules:
         self._alerts = []
 
 
-        for groups in prometheus_rules_json["data"]["groups"]:
-            for r in groups['rules']:
+        for group in prometheus_rules_json["data"]["groups"]:
+            for r in group['rules']:
                 nrpe_data = PrometheusRule(r)
+                nrpe_data._group_name = group["name"]
+                nrpe_data._group_file = group["file"]
                 if nrpe_data.is_nrpe_rule():
                     self._alerts.append(nrpe_data)
 
