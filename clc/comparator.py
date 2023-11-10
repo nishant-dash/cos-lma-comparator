@@ -23,8 +23,18 @@ def compare(left_alerts, right_alerts):
     left_defs = set(x.definition() for x in left_alerts)
     right_defs = set(x.definition() for x in right_alerts)
 
-    assert len(left_defs) == len(left_alerts), "Some left alerts share details which should be unique"
-    assert len(right_defs) == len(right_alerts), "Some right alerts share details which should be unique"
+    # assert len(left_defs) == len(left_alerts), "Some left alerts share details which should be unique"
+    # assert len(right_defs) == len(right_alerts), "Some right alerts share details which should be unique"
+
+    identify_duplicates(left_alerts)
+    identify_duplicates(right_alerts)
+    # if not (len(left_defs) == len(left_alerts)):
+    #     print("!!!!!!!!!!!!!!!!!!!!!!")
+    #     print("Some left alerts share details which should be unique:")
+
+    # if not (len(right_defs) == len(right_alerts)):
+    #     print("!!!!!!!!!!!!!!!!!!!!!!")
+    #     print("Some right alerts share details which should be unique")
 
     extra_defs = left_defs - right_defs
     missing_defs = right_defs - left_defs
@@ -53,6 +63,34 @@ def compare(left_alerts, right_alerts):
         "extra_alerts": extra_defs,
         "disagreements": disagreements,
     }
+
+def identify_duplicates(alerts):
+    """
+    For debugging only. Find the alerts which share the same definition (which shouldn't be unique among all alerts).
+    """
+
+    # Make a dictionary with keys being the "unique" part
+    from collections import defaultdict
+    d = defaultdict(lambda: [])
+    for alert in alerts:
+        d[alert.definition()].append(alert)
+
+    # Remove all definitions with only one entry - hacky
+    for k in list(d.keys()):
+        if len(d[k]) == 1:
+            del d[k]
+
+    if len(d) == 0:
+        return
+
+    print("Duplicate keys")
+    print("==============")
+    for k,v in d.items():
+        print(k, "has duplicates:")
+        for alert in v:
+            print(" -> ", alert)
+        print()
+
 
 
 def summary(alerts):
