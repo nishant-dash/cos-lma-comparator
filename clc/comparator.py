@@ -20,8 +20,8 @@ def compare(left_alerts, right_alerts):
     # The set of {juju_model, juju_unit, alert_check_name} is the "definition/identifier"
     # of the NRPEData. The {alert_state, alert_time} are variable "measurements".
 
-    left_defs = set(x.definition() for x in left_alerts)
-    right_defs = set(x.definition() for x in right_alerts)
+    left_defs = set(left_alerts)
+    right_defs = set(right_alerts)
 
     # assert len(left_defs) == len(left_alerts), "Some left alerts share details which should be unique"
     # assert len(right_defs) == len(right_alerts), "Some right alerts share details which should be unique"
@@ -67,15 +67,14 @@ def compare(left_alerts, right_alerts):
 
 def identify_duplicates(alerts):
     """
-    For debugging only. Find the alerts which share the same definition (which
-    shouldn't be unique among all alerts).
+    For debugging only. Find the alerts which share the same definition (which shouldn't be unique among all alerts).
     """
 
     # Make a dictionary with keys being the "unique" part
     from collections import defaultdict
     d = defaultdict(lambda: [])
     for alert in alerts:
-        d[alert.definition()].append(alert)
+        d[alert].append(alert)
 
     # Remove all definitions with only one entry - hacky
     for k in list(d.keys()):
@@ -116,12 +115,10 @@ def summary(alerts):
         app_part = alert.juju_unit.split("/")
         return "{}:{}".format(alert.juju_model, app_part)
 
-    unique_apps = set(app_name(x) for x in alerts)
+    unique_apps = list(app_name(x) for x in alerts)
 
     # The unit name needs to be distinguished by the model as well
-    unique_units = set(
-        "{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts
-    )
+    unique_units = set("{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts)
 
     rules_in_error = [x for x in alerts if x.alert_state != 0]
 

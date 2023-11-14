@@ -1,11 +1,9 @@
 """Main entry point."""
-import asyncio
-
-from clc import cli
+from . import cli
 
 def main() -> None:
     """Enter the application."""
-    asyncio.run(cli.main())
+    cli.main()
 
 
 if __name__ == "__main__":

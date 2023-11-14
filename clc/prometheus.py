@@ -18,13 +18,9 @@ class PrometheusRule(NRPEData):
         if self.is_nrpe_rule():
             self.alert_check_name = self.__extract_command()
 
-    def __str__(self):
-        return json.dumps(self.__dict__, indent=2)
-
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)
         if extract_command:
-
             return extract_command.group(1)
         else:
             raise Exception("Could not parse command from prometheus output: {}".format(self._query))
@@ -60,7 +56,8 @@ def fetch_prometheus_json(url):
     Fetch the list of all rules from the Prometheus endpoint and return it as a
     parsed dictionary.
 
-    url: string - the prometheus endpoint without trailing slash, e.g. http://10.123.456.78:80/cos-prometheus-0
+    url: string - the prometheus endpoint without trailing slash,
+    e.g. http://10.123.456.78:80/cos-prometheus-0
     '''
 
     response = requests.get(url + "/api/v1/rules")
@@ -93,7 +90,7 @@ def get_prometheus_url(args):
 
 def get_prometheus_data(args):
     if args.prometheus_url is None:
-        url = get_prometheus_url()
+        url = get_prometheus_url(args)
     else:
         url = args.prometheus_url
     return fetch_prometheus_json(url)

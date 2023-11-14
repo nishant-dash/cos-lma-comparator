@@ -1,13 +1,10 @@
 import json
-from juju import jasyncio
 
 from .utils import juju_helper
 from .utils.structures import NRPEData
 
 
 class NagiosService(NRPEData):
-    """
-    """
     def __init__(self, nagios_service_json, nagios_context=None):
         super().__init__(self)
         self.set_json(nagios_service_json)
@@ -16,9 +13,6 @@ class NagiosService(NRPEData):
 
         self.juju_unit = self.__extract_unit_name()
         self.alert_check_name = self._host_check_command
-
-    def __str__(self):
-        return json.dumps(self.__dict__, indent=2)
 
     def __context_match(self):
         return self._host_display_name.startswith(self.nagios_context)
@@ -37,12 +31,16 @@ class NagiosService(NRPEData):
             return self.juju_unit.split("/")[0]
 
 
+
 class NagiosServices:
     def __init__(self, nagios_services_json, nagios_context=None):
         self._alerts = []
 
         for service in nagios_services_json:
             self._alerts.append(NagiosService(service, nagios_context))
+
+    def alerts(self):
+        return list(self._alerts)
 
 
 def get_nagios_data(args):
