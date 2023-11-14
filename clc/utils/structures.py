@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class NRPEData:
+    """"""
     # These are identifiers - they must be unique
     juju_model: str = None
     juju_unit: str = None

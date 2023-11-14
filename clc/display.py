@@ -1,5 +1,5 @@
-
 TRUNCATE_THRESHOLD = 20
+
 
 def list_rules(alerts, args):
     if args.format != "plain":
@@ -10,6 +10,7 @@ def list_rules(alerts, args):
         lambda alert: print("Alert {}".format(alert.definition())),
         args
     )
+
 
 def show_diff(diff_output, args):
     if args.format != "plain":
@@ -42,6 +43,7 @@ def show_diff(diff_output, args):
     )
     print()
 
+
 def show_summary(summary, args):
     if args.format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
@@ -49,17 +51,14 @@ def show_summary(summary, args):
     print(summary)
 
 
-
-
-def print_truncatable_list(l, print_func, args):
+def print_truncatable_list(lst, print_func, args):
     truncate_amount = int(TRUNCATE_THRESHOLD/2)
-    if not args.long and len(l) > TRUNCATE_THRESHOLD:
-        for item in l[:truncate_amount]:
+    if not args.long and len(lst) > TRUNCATE_THRESHOLD:
+        for item in lst[:truncate_amount]:
             print_func(item)
-        print("..... {} rules omitted .....".format(len(l) - truncate_amount*2))
-        for item in l[-truncate_amount:]:
+        print("..... {} rules omitted .....".format(len(lst) - truncate_amount*2))
+        for item in lst[-truncate_amount:]:
             print_func(item)
     else:
-        for item in l:
+        for item in lst:
             print_func(item)
-    

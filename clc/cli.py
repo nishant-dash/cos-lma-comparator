@@ -1,7 +1,7 @@
 import logging
 import argparse
 
-from .nagios import get_nagios_data
+from .nagios import get_nagios_data, NagiosServices
 from .prometheus import get_prometheus_data, PrometheusRules
 from . import display
 
@@ -60,9 +60,9 @@ def parser():
 def main():
     args = parser().parse_args()
 
-    #logging.basicConfig(level=logging.DEBUG)
-    #ws_logger = logging.getLogger('websockets.protocol')
-    #ws_logger.setLevel(logging.INFO)
+    # logging.basicConfig(level=logging.DEBUG)
+    # ws_logger = logging.getLogger('websockets.protocol')
+    # ws_logger.setLevel(logging.INFO)
 
     nagios_services_json = get_nagios_data(args)
     logging.debug(nagios_services_json)
@@ -73,26 +73,27 @@ def main():
     nagios_services = NagiosServices(nagios_services_json, args)
     prometheus_rules = PrometheusRules(prometheus_rules_json)
 
-    diff_output = comparator.compare(prometheus_rules.alerts(), nagios_services.alerts())
+    diff_output = comparator.compare(
+        prometheus_rules.alerts(), nagios_services.alerts()
+    )
     # summary = comparator.summary(nagios_services.alerts())
     summary = comparator.summary(prometheus_rules.alerts())
 
     # TODO: Pretty print or json output
-
     if args.verbose:
         # Also print the list of rules
 
         # TODO: Organise this better
         print("List of nagios services")
-        print("========================")
+        print("=======================")
         # display.list_rules(nagios_services.alerts(), args)
         display.list_rules(prometheus_rules.alerts(), args)
         print()
 
-    # TODO: Always show both diff and summary - but later make this listen to options
+    # TODO: Always show both diff and summary - but later make this listen to
+    # options
     display.show_diff(diff_output, args)
     display.show_summary(summary, args)
-
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ def compare(left_alerts, right_alerts):
         # as there should be guaranteed to be exactly one alert.
         prom_alert = [x for x in left_alerts if x.definition() == alert_def][0]
         right_alert = [x for x in right_alerts if x.definition() == alert_def][0]
-        
+
         if right_alert.alert_state != prom_alert.alert_state:
             disagreements.append({
                 "definition": alert_def,
@@ -56,7 +56,7 @@ def compare(left_alerts, right_alerts):
                 "right_state": right_alert.alert_state,
                 "right_time": right_alert.alert_time,
             })
-        #print("{} vs {} for {}".format(right_alert.alert_state, prom_alert.alert_state, alert_def))
+        # print("{} vs {} for {}".format(right_alert.alert_state, prom_alert.alert_state, alert_def))
 
     return {
         "missing_alerts": missing_defs,
@@ -64,9 +64,11 @@ def compare(left_alerts, right_alerts):
         "disagreements": disagreements,
     }
 
+
 def identify_duplicates(alerts):
     """
-    For debugging only. Find the alerts which share the same definition (which shouldn't be unique among all alerts).
+    For debugging only. Find the alerts which share the same definition (which
+    shouldn't be unique among all alerts).
     """
 
     # Make a dictionary with keys being the "unique" part
@@ -85,7 +87,7 @@ def identify_duplicates(alerts):
 
     print("Duplicate keys")
     print("==============")
-    for k,v in d.items():
+    for k, v in d.items():
         print(k, "has duplicates:")
         # Check to see if everything is identical
         if all(vi == v[0] for vi in v):
@@ -95,7 +97,6 @@ def identify_duplicates(alerts):
             for alert in v:
                 print(" -> ", alert)
         print()
-
 
 
 def summary(alerts):
@@ -118,10 +119,11 @@ def summary(alerts):
     unique_apps = set(app_name(x) for x in alerts)
 
     # The unit name needs to be distinguished by the model as well
-    unique_units = set("{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts)
+    unique_units = set(
+        "{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts
+    )
 
     rules_in_error = [x for x in alerts if x.alert_state != 0]
-
 
     return {
         "num_apps": len(unique_apps),
@@ -129,4 +131,3 @@ def summary(alerts):
         "num_rules": len(alerts),
         "num_rules_alerting": len(rules_in_error),
     }
-

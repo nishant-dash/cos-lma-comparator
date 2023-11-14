@@ -6,6 +6,8 @@ from .utils.structures import NRPEData
 
 
 class NagiosService(NRPEData):
+    """
+    """
     def __init__(self, nagios_service_json, nagios_context=None):
         super().__init__(self)
         self.set_json(nagios_service_json)
