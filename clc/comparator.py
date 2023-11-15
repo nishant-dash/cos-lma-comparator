@@ -11,30 +11,8 @@ def compare(left_alerts, right_alerts):
     right_alerts: set of NRPEData
     """
 
-    # If the data is exactly the same, we should be able to do:
-    #   extra_alerts = left_alerts - right_alerts
-    #   missing_alerts = right_alerts - left_alerts
-    # But since we have time to compare with, this might be a problem. Also we
-    # might want to see which ones are different in terms of alerts.
-
-    # The set of {juju_model, juju_unit, alert_check_name} is the "definition/identifier"
-    # of the NRPEData. The {alert_state, alert_time} are variable "measurements".
-
-    left_defs = set(left_alerts)
-    right_defs = set(right_alerts)
-
-    # assert len(left_defs) == len(left_alerts), "Some left alerts share details which should be unique"
-    # assert len(right_defs) == len(right_alerts), "Some right alerts share details which should be unique"
-
-    identify_duplicates(left_alerts)
-    identify_duplicates(right_alerts)
-    # if not (len(left_defs) == len(left_alerts)):
-    #     print("!!!!!!!!!!!!!!!!!!!!!!")
-    #     print("Some left alerts share details which should be unique:")
-
-    # if not (len(right_defs) == len(right_alerts)):
-    #     print("!!!!!!!!!!!!!!!!!!!!!!")
-    #     print("Some right alerts share details which should be unique")
+    left_defs  = set(sorted(left_alerts))
+    right_defs = set(sorted(right_alerts))
 
     extra_defs = left_defs - right_defs
     missing_defs = right_defs - left_defs
@@ -50,7 +28,7 @@ def compare(left_alerts, right_alerts):
 
         if right_alert.alert_state != prom_alert.alert_state:
             disagreements.append({
-                "definition": alert_def,
+                "definition": str(alert_def),
                 "left_state": prom_alert.alert_state,
                 "left_time": prom_alert.alert_time,
                 "right_state": right_alert.alert_state,
@@ -67,35 +45,18 @@ def compare(left_alerts, right_alerts):
 
 def identify_duplicates(alerts):
     """
-    For debugging only. Find the alerts which share the same definition (which shouldn't be unique among all alerts).
+    For debugging only. Find the alerts which share the same definition (which
+    shouldn't be unique among all alerts).
     """
 
-    # Make a dictionary with keys being the "unique" part
-    from collections import defaultdict
-    d = defaultdict(lambda: [])
-    for alert in alerts:
-        d[alert].append(alert)
+    seen = set()
+    dupes = [alert for alert in alerts if alert in seen or seen.add(alert)]
 
-    # Remove all definitions with only one entry - hacky
-    for k in list(d.keys()):
-        if len(d[k]) == 1:
-            del d[k]
-
-    if len(d) == 0:
-        return
-
-    print("Duplicate keys")
+    print("Duplicate alerts")
     print("==============")
-    for k, v in d.items():
-        print(k, "has duplicates:")
-        # Check to see if everything is identical
-        if all(vi == v[0] for vi in v):
-            print("ALL VALUES (n={}) ARE IDENTICAL IN THEIR DETAIL... WTF???".format(len(v)))
-            print(v[0])
-        else:
-            for alert in v:
-                print(" -> ", alert)
-        print()
+    [print(str(k), dupes.count(k) + 1) for k in set(dupes)]
+
+    return dupes
 
 
 def summary(alerts):

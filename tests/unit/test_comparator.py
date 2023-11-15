@@ -1,23 +1,34 @@
 import pytest
 
-from clc.comparator import compare
+from clc.comparator import compare, identify_duplicates
 from clc.nrpedata import NRPEData
 
 
 def test_compare():
-    alert1 = NRPEData(juju_model="model",
-                      juju_unit="app-unit/0",
-                      alert_check_name="check-name",
-                      alert_state=0,
-                      alert_time=1)
+    alert1 = NRPEData(juju_unit="app-unit/0", alert_check_name="check-alert-0")
+    alert2 = NRPEData(juju_unit="app-unit/1", alert_check_name="check-alert-1")
+    alert3 = NRPEData(juju_unit="app-unit/2", alert_check_name="check-alert-2")
+    alert4 = NRPEData(juju_unit="app-unit/3", alert_check_name="check-alert-3")
 
-    alert2 = NRPEData(juju_model="model",
-                      juju_unit="app-unit/0",
-                      alert_check_name="check-name",
-                      alert_state=0,
-                      alert_time=1)
+    left = [
+        alert1,
+        alert2,
+        alert3,
+    ]
 
-    assert compare([alert1],[alert2])
+    right = [
+        alert1,
+        alert2,
+        alert4,
+    ]
+
+    expected_extra_alerts = set([alert3])
+    expected_missing_alerts = set([alert4])
+
+    output = compare(left, right)
+    assert output["missing_alerts"] == expected_missing_alerts
+    assert output["extra_alerts"] == expected_extra_alerts
+
 
 def test_long_compare():
     alert1 = NRPEData(juju_model="openstack", juju_unit="octavia", alert_check_name="lbs", alert_state=0, alert_time=42)
@@ -46,10 +57,9 @@ def test_long_compare():
     ]
 
     # We should get assertion error when there's a duplicate
-    with pytest.raises(AssertionError):
-        compare(left_alerts + [alert1repeat], right_alerts)
-    with pytest.raises(AssertionError):
-        compare(left_alerts, right_alerts + [alert1repeatb])
+    # with pytest.raises(AssertionError):
+    #     compare(left_alerts + [alert1repeat], right_alerts)
+    #     compare(left_alerts, right_alerts + [alert1repeatb])
 
     output = compare(left_alerts, right_alerts)
 
@@ -64,3 +74,20 @@ def test_long_compare():
             "right_time": alert4b.alert_time,
     }]
     assert output["disagreements"] == expected_disagreements
+
+
+def test_identify_duplicates():
+    alert1 = NRPEData(juju_unit="app-unit/0", alert_check_name="check-alert-1")
+    alert2 = NRPEData(juju_unit="app-unit/1", alert_check_name="check-alert-2")
+
+    alerts = [
+        alert1,
+        alert1,
+        alert1,
+        alert2,
+    ]
+
+    expect_dupe = identify_duplicates(alerts)
+
+    assert expect_dupe[0] == alert1
+    assert alert2 not in expect_dupe

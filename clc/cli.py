@@ -3,8 +3,9 @@ import argparse
 
 from .nagios import get_nagios_data, NagiosServices
 from .prometheus import get_prometheus_data, PrometheusRules
-from . import display
-from . import comparator
+from .display import list_rules, show_diff, show_summary
+from .comparator import compare, summary, identify_duplicates
+from .juju_helper import juju_config
 
 
 def parser():
@@ -85,6 +86,7 @@ def main():
         )
     else:
         nagios_context = args.nagios_context
+
     nagios_services = NagiosServices(nagios_services_json, nagios_context)
 
     prometheus_rules_json = get_prometheus_data(
@@ -96,27 +98,24 @@ def main():
     logging.debug(prometheus_rules_json)
     prometheus_rules = PrometheusRules(prometheus_rules_json)
 
-    diff_output = comparator.compare(
+    identify_duplicates(prometheus_rules.alerts())
+    identify_duplicates(nagios_services.alerts())
+
+    diff_output = compare(
         prometheus_rules.alerts(), nagios_services.alerts()
     )
-    # summary = comparator.summary(nagios_services.alerts())
-    summary = comparator.summary(prometheus_rules.alerts())
+
+    summary_output = summary(prometheus_rules.alerts())
 
     # TODO: Pretty print or json output
 
     if args.verbose:
-        # Also print the list of rules
+        list_rules(prometheus_rules.alerts(), args.format, args.long)
 
-        # TODO: Organise this better
-        print("List of nagios services")
-        print("========================")
-        # display.list_rules(nagios_services.alerts(), args)
-        display.list_rules(prometheus_rules.alerts(), args.format, args.long)
-        print()
-
-    # TODO: Always show both diff and summary - but later make this listen to options
-    display.show_diff(diff_output, args.format, args.long)
-    display.show_summary(summary, args.format, args.long)
+    # TODO: Always show both diff and summary - but later make this listen to
+    # options
+    show_diff(diff_output, args.format, args.long)
+    show_summary(summary_output, args.format, args.long)
 
 
 if __name__ == "__main__":

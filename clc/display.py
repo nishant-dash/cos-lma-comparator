@@ -2,6 +2,10 @@ TRUNCATE_THRESHOLD = 20
 
 
 def list_rules(alerts, out_format, long_format):
+    # TODO: Organise this better
+    print("List of nagios services")
+    print("========================")
+
     if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
@@ -10,6 +14,7 @@ def list_rules(alerts, out_format, long_format):
         lambda alert: print("Alert {}".format(alert.definition())),
         long_format,
     )
+    print()
 
 
 def show_diff(diff_output, out_format, long_format):
