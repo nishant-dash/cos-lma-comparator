@@ -1,8 +1,8 @@
 TRUNCATE_THRESHOLD = 20
 
 
-def list_rules(alerts, args):
-    if args.format != "plain":
+def list_rules(alerts, format):
+    if format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
     print_truncatable_list(

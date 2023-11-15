@@ -4,7 +4,6 @@ import argparse
 from .nagios import get_nagios_data, NagiosServices
 from .prometheus import get_prometheus_data, PrometheusRules
 from . import display
-
 from . import comparator
 
 
@@ -45,7 +44,7 @@ def parser():
     parser.add_argument('--prometheus-url',
                         default=None,
                         help='Instead of auto-detecting the location of \
-                        prometheus, use a givenkURL')
+                        prometheus, use a given URL')
 
     parser.add_argument('-f', '--format',
                         default='plain',
@@ -65,20 +64,41 @@ def parser():
 def main():
     args = parser().parse_args()
 
-    # logging.basicConfig(level=logging.DEBUG)
-    # ws_logger = logging.getLogger('websockets.protocol')
-    # ws_logger.setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO)
+    ws_logger = logging.getLogger('websockets.protocol')
+    ws_logger.setLevel(logging.INFO)
 
-    nagios_services_json = get_nagios_data(args)
+    nagios_services_json = get_nagios_data(
+        args.juju_lma_controller,
+        args.juju_lma_model,
+        args.juju_lma_user,
+    )
     logging.debug(nagios_services_json)
 
-    prometheus_rules_json = get_prometheus_data(args)
-    logging.debug(prometheus_rules_json)
+    if not args.nagios_context:
+        nagios_context = juju_config(
+            args.juju_lma_controller,
+            args.juju_lma_model,
+            args.juju_lma_user,
+            "nagios",
+            "nagios_host_context"
+        )
+    else:
+        nagios_context = args.nagios_context
+    nagios_services = NagiosServices(nagios_services_json, nagios_context)
 
-    nagios_services = NagiosServices(nagios_services_json, args.nagios_context)
+    prometheus_rules_json = get_prometheus_data(
+        args.prometheus_url,
+        args.juju_cos_controller,
+        args.juju_cos_model,
+        args.juju_cos_user,
+    )
+    logging.debug(prometheus_rules_json)
     prometheus_rules = PrometheusRules(prometheus_rules_json)
 
-    diff_output = comparator.compare(prometheus_rules.alerts(), nagios_services.alerts())
+    diff_output = comparator.compare(
+        prometheus_rules.alerts(), nagios_services.alerts()
+    )
     # summary = comparator.summary(nagios_services.alerts())
     summary = comparator.summary(prometheus_rules.alerts())
 

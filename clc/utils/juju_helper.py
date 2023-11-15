@@ -1,5 +1,7 @@
-import subprocess as sp
 import yaml
+import logging
+
+from subprocess import run, PIPE, DEVNULL
 
 JUJU = "/snap/bin/juju"
 
@@ -18,9 +20,7 @@ def juju_ssh(
     elif juju_version.startswith("3"):
         JUJU = "/snap/bin/juju_31"
     else:
-        # log
-        print(f"Can not infer or Unknown juju version {juju_version}")
-        return
+        raise Exception(f"Cannot infer or Unknown juju version {juju_version}")
 
     cmd = [
         JUJU,
@@ -30,13 +30,9 @@ def juju_ssh(
         f"{app_name}/leader",
         command
     ]
-    print(f"Running {cmd}")
-    output = sp.run(cmd, stdout=sp.PIPE, stderr=sp.DEVNULL, text=True)
-    # juju_info = ""
-    # try:
-    #     juju_info = json.loads(output.stdout)
-    # except json.JSONDecodeError as error:
-    #     print(error)
+    logging.info(f"Running {cmd}")
+    output = run(cmd, stdout=PIPE, stderr=DEVNULL, text=True)
+
     return output.stdout
 
 
@@ -55,9 +51,7 @@ def juju_run_action(
         JUJU = "/snap/bin/juju_31"
         run_action_cmd = ["run"]
     else:
-        # log
-        print(f"Can not infer or Unknown juju version {juju_version}")
-        return
+        raise Exception(f"Cannot infer or Unknown juju version {juju_version}")
 
     cmd = [JUJU] + run_action_cmd
     cmd += [
@@ -66,13 +60,34 @@ def juju_run_action(
         f"{app_name}/leader",
         command
     ]
-    print(f"Running {cmd}")
-    output = sp.run(cmd, stdout=sp.PIPE, stderr=sp.DEVNULL)
+
+    logging.info(f"Running {cmd}")
+    output = run(cmd, stdout=PIPE, stderr=DEVNULL)
     output = output.stdout.decode('utf-8')
     output_yaml = ""
     try:
         output_yaml = yaml.safe_load(output)
     except yaml.YAMLError as error:
-        print(error)
+        logging.error(error)
         output_yaml = None
     return output_yaml
+
+
+def juju_config(
+    controller_name="foundations-maas",
+    model_name="lma-maas",
+    user="admin",
+    app_name="nagios",
+    config="",
+):
+    cmd = [
+        JUJU,
+        "config",
+        "-m",
+        f"{controller_name}:{user}/{model_name}",
+        f"{app_name}",
+        f"{config}",
+    ]
+    logging.info(f"Retrieve config: {cmd}")
+    output = run(cmd, stdout=PIPE, stderr=DEVNULL, text=True)
+    return output.stdout
