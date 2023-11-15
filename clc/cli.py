@@ -111,12 +111,12 @@ def main():
         print("List of nagios services")
         print("========================")
         # display.list_rules(nagios_services.alerts(), args)
-        display.list_rules(prometheus_rules.alerts(), args)
+        display.list_rules(prometheus_rules.alerts(), args.format, args.long)
         print()
 
     # TODO: Always show both diff and summary - but later make this listen to options
-    display.show_diff(diff_output, args)
-    display.show_summary(summary, args)
+    display.show_diff(diff_output, args.format, args.long)
+    display.show_summary(summary, args.format, args.long)
 
 
 if __name__ == "__main__":

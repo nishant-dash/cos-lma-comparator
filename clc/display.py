@@ -1,19 +1,19 @@
 TRUNCATE_THRESHOLD = 20
 
 
-def list_rules(alerts, format):
-    if format != "plain":
+def list_rules(alerts, out_format, long_format):
+    if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
     print_truncatable_list(
         alerts,
         lambda alert: print("Alert {}".format(alert.definition())),
-        args
+        long_format,
     )
 
 
-def show_diff(diff_output, args):
-    if args.format != "plain":
+def show_diff(diff_output, out_format, long_format):
+    if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
     print("Rules missing from prometheus")
@@ -21,7 +21,7 @@ def show_diff(diff_output, args):
     print_truncatable_list(
         sorted(diff_output["missing_alerts"]),
         lambda alert: print(alert),
-        args
+        long_format,
     )
     print()
 
@@ -30,7 +30,7 @@ def show_diff(diff_output, args):
     print_truncatable_list(
         sorted(diff_output["extra_alerts"]),
         lambda alert: print(alert),
-        args
+        long_format,
     )
     print()
 
@@ -39,21 +39,21 @@ def show_diff(diff_output, args):
     print_truncatable_list(
         sorted(diff_output["disagreements"]),
         lambda output: print(output),
-        args
+        long_format,
     )
     print()
 
 
-def show_summary(summary, args):
-    if args.format != "plain":
+def show_summary(summary, out_format):
+    if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
     print(summary)
 
 
-def print_truncatable_list(lst, print_func, args):
+def print_truncatable_list(lst, print_func, long_format):
     truncate_amount = int(TRUNCATE_THRESHOLD/2)
-    if not args.long and len(lst) > TRUNCATE_THRESHOLD:
+    if not long_format and len(lst) > TRUNCATE_THRESHOLD:
         for item in lst[:truncate_amount]:
             print_func(item)
         print("..... {} rules omitted .....".format(len(lst) - truncate_amount*2))

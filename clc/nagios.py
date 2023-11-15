@@ -1,7 +1,7 @@
 import json
 
-from .utils import juju_helper
-from .utils.structures import NRPEData
+from . import juju_helper
+from .nrpedata import NRPEData
 
 
 class NagiosService(NRPEData):
@@ -31,7 +31,6 @@ class NagiosService(NRPEData):
             return self.juju_unit.split("/")[0]
 
 
-
 class NagiosServices:
     def __init__(self, nagios_services_json, nagios_context=None):
         self._alerts = []
@@ -43,11 +42,15 @@ class NagiosServices:
         return list(self._alerts)
 
 
-def get_nagios_data(args):
+def get_nagios_data(
+    juju_lma_controller,
+    juju_lma_model,
+    juju_lma_user,
+):
     nagios_services = juju_helper.juju_ssh(
-        controller_name=args.juju_lma_controller,
-        model_name=args.juju_lma_model,
-        user=args.juju_lma_user,
+        controller_name=juju_lma_controller,
+        model_name=juju_lma_model,
+        user=juju_lma_user,
         app_name='thruk-agent',
         command='sudo thruk r /services',
     )

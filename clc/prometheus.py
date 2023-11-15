@@ -2,8 +2,8 @@ import json
 import re
 import requests
 
-from .utils import juju_helper
-from .utils.structures import NRPEData
+from . import juju_helper
+from .nrpedata import NRPEData
 
 
 class PrometheusRule(NRPEData):
@@ -51,27 +51,15 @@ class PrometheusRules:
         return list(self._alerts)
 
 
-def fetch_prometheus_json(url):
-    '''
-    Fetch the list of all rules from the Prometheus endpoint and return it as a
-    parsed dictionary.
-
-    url: string - the prometheus endpoint without trailing slash,
-    e.g. http://10.123.456.78:80/cos-prometheus-0
-    '''
-
-    response = requests.get(url + "/api/v1/rules")
-    if not response.ok:
-        raise Exception("Unable to fetch rules from endpoint")
-
-    return response.json()
-
-
-def get_prometheus_url(args):
+def get_prometheus_url(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
     traefik_proxied_endpoints_action_raw = juju_helper.juju_run_action(
-            controller_name=args.juju_cos_controller,
-            model_name=args.juju_cos_model,
-            user=args.juju_cos_user,
+            controller_name=juju_cos_controller,
+            model_name=juju_cos_model,
+            user=juju_cos_user,
             app_name='traefik',
             command='show-proxied-endpoints'
     )
@@ -88,9 +76,32 @@ def get_prometheus_url(args):
     raise Exception("Unable to find URL for prometheus in traefik endpoints")
 
 
-def get_prometheus_data(args):
-    if args.prometheus_url is None:
-        url = get_prometheus_url(args)
+def get_prometheus_data(
+    prometheus_url=None,
+    juju_cos_controller=None,
+    juju_cos_model=None,
+    juju_cos_user=None,
+):
+    '''
+    Fetch the list of all rules from the Prometheus endpoint and return it as a
+    parsed dictionary.
+
+    prometheus_url: string - the prometheus endpoint without trailing slash,
+    e.g. http://10.123.456.78:80/cos-prometheus-0
+
+    If prometheus_url is None it will try to retrieve the URL from COS model
+    '''
+    if prometheus_url is None:
+        url = get_prometheus_url(
+            juju_cos_controller,
+            juju_cos_model,
+            juju_cos_user,
+        )
     else:
-        url = args.prometheus_url
-    return fetch_prometheus_json(url)
+        url = prometheus_url
+
+    response = requests.get(url + "/api/v1/rules")
+    if not response.ok:
+        raise Exception("Unable to get rules from prometheus endpoint")
+
+    return response.json()
