@@ -45,8 +45,8 @@ def compare(left_alerts, right_alerts):
     for alert_def in common_defs:
         # Find it in the left and right defs - note the [0] at the end
         # as there should be guaranteed to be exactly one alert.
-        prom_alert = [x for x in left_alerts if x.definition() == alert_def][0]
-        right_alert = [x for x in right_alerts if x.definition() == alert_def][0]
+        prom_alert = [x for x in left_alerts if x == alert_def][0]
+        right_alert = [x for x in right_alerts if x == alert_def][0]
 
         if right_alert.alert_state != prom_alert.alert_state:
             disagreements.append({

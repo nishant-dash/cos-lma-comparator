@@ -1,5 +1,5 @@
-import json
 from dataclasses import dataclass
+
 
 @dataclass
 class NRPEData:
@@ -16,12 +16,26 @@ class NRPEData:
         for k, v in raw_alert_json.items():
             setattr(self, "_" + k, v)
 
+    def __str__(self):
+        return ":".join([
+            str(self.juju_model or ''),
+            str(self.juju_unit or ''),
+            str(self.alert_check_name or ''),
+            str('' if self.alert_state is None else self.alert_state),
+            str('' if self.alert_time is None else self.alert_time),
+        ])
+
     def __hash__(self):
         """
         Export a tuple with the fields that are identifiers and should be
         unique amongst all alerts from this monitoring service.
         """
-        return hash((self.juju_unit, self.alert_check_name))
+        return hash((
+            self.juju_model,
+            self.juju_unit,
+            self.alert_check_name,
+            self.alert_state,
+        ))
 
     def __lt__(self, other):
         return str(self) < str(other)
@@ -29,6 +43,3 @@ class NRPEData:
     def __eq__(self, other):
         return isinstance(other, self.__class__) and \
                str(self) == str(other)
-
-    def __str__(self):
-        return "{}-{}".format(self.juju_unit, self.alert_check_name)
