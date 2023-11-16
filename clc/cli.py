@@ -87,6 +87,8 @@ def main():
     else:
         nagios_context = args.nagios_context
 
+    logging.info(f"nagios_context: {nagios_context}")
+
     nagios_services = NagiosServices(nagios_services_json, nagios_context)
 
     prometheus_rules_json = get_prometheus_data(
@@ -115,7 +117,7 @@ def main():
     # TODO: Always show both diff and summary - but later make this listen to
     # options
     show_diff(diff_output, args.format, args.long)
-    show_summary(summary_output, args.format, args.long)
+    show_summary(summary_output, args.format)
 
 
 if __name__ == "__main__":

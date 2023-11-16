@@ -1,3 +1,5 @@
+import logging
+
 
 def compare(left_alerts, right_alerts):
     """
@@ -11,12 +13,16 @@ def compare(left_alerts, right_alerts):
     right_alerts: set of NRPEData
     """
 
-    left_defs  = set(sorted(left_alerts))
-    right_defs = set(sorted(right_alerts))
+    left_defs  = set(left_alerts)
+    right_defs = set(right_alerts)
 
     extra_defs = left_defs - right_defs
     missing_defs = right_defs - left_defs
     common_defs = left_defs & right_defs
+
+    logging.info(f"extra_alerts: {len(extra_defs)}")
+    logging.info(f"missing_alerts: {len(missing_defs)}")
+    logging.info(f"common_alerts: {len(common_defs)}")
 
     # Only the common alerts can be compared for their exact values
     disagreements = []
@@ -52,6 +58,7 @@ def identify_duplicates(alerts):
     seen = set()
     dupes = [alert for alert in alerts if alert in seen or seen.add(alert)]
 
+    print()
     print("Duplicate alerts")
     print("==============")
     [print(str(k), dupes.count(k) + 1) for k in set(dupes)]
@@ -73,10 +80,9 @@ def summary(alerts):
     def app_name(alert):
         # Note: an app name is determined from its unit name. However, it is also
         # distinguished by the model that it is in.
-        app_part = alert.juju_unit.split("/")
-        return "{}:{}".format(alert.juju_model, app_part)
+        return alert.juju_unit.split("/")[0]
 
-    unique_apps = list(app_name(x) for x in alerts)
+    unique_apps = set(app_name(x) for x in alerts)
 
     # The unit name needs to be distinguished by the model as well
     unique_units = set("{}:{}".format(alert.juju_model, alert.juju_unit) for alert in alerts)

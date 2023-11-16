@@ -90,4 +90,4 @@ def juju_config(
     ]
     logging.info(f"Retrieve config: {cmd}")
     output = run(cmd, stdout=PIPE, stderr=DEVNULL, text=True)
-    return output.stdout
+    return output.stdout.strip()

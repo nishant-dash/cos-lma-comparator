@@ -1,4 +1,5 @@
 import json
+import re
 
 from . import juju_helper
 from .nrpedata import NRPEData
@@ -12,19 +13,21 @@ class NagiosService(NRPEData):
         self.nagios_context = nagios_context
 
         self.juju_unit = self.__extract_unit_name()
-        self.alert_check_name = self._host_check_command
+        self.alert_check_name = self.__extract_check_command()
 
     def __context_match(self):
-        return self._host_display_name.startswith(self.nagios_context)
+        return bool(re.search(self.nagios_context, self._host_display_name))
 
     def __extract_unit_name(self):
         if self.__context_match():
-            return self._host_display_name[len(self.nagios_context)+1:].replace("-", "/")
+            names = self._host_display_name[len(self.nagios_context)+1:].split('-')
+            return '-'.join(names[:-1]) + '/' + names[-1]
         else:
             return self._host_display_name
 
     def __extract_check_command(self):
-        return
+        return self._display_name[len(self.nagios_context)+1+len(self.juju_unit)+1:]
+            #raise Exception("Could not parse command from nagios display_name: {}".format(self._display_name))
 
     def __extract_app_name(self):
         if self.juju_unit:
