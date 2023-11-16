@@ -6,7 +6,7 @@ from .nrpedata import NRPEData
 
 class NagiosService(NRPEData):
     def __init__(self, nagios_service_json, nagios_context=None):
-        super().__init__(self)
+        super().__init__()
         self.set_json(nagios_service_json)
 
         self.nagios_context = nagios_context

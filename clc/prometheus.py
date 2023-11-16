@@ -8,7 +8,7 @@ from .nrpedata import NRPEData
 
 class PrometheusRule(NRPEData):
     def __init__(self, prometheus_rule_json):
-        super().__init__(self)
+        super().__init__()
 
         self.set_json(prometheus_rule_json)
 
