@@ -41,7 +41,7 @@ class NRPEData:
         return str(self) < str(other)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and \
+        return isinstance(other, NRPEData) and \
             self.juju_model == other.juju_model and \
             self.juju_unit == other.juju_unit and \
             self.alert_check_name == other.alert_check_name and \

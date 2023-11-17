@@ -12,8 +12,8 @@ def prometheus_rules_json():
 
 def test_prometheus_rule(prometheus_rules_json):
     rule = PrometheusRule(prometheus_rules_json["data"]["groups"][200]["rules"][0])
-    assert rule.juju_unit == "nrpe-storage/0"
-    assert rule.alert_check_name == "check_ipmi"
+    assert rule.juju_unit == "bootstack-hijk-lmn-opqrst-storage-6"
+    assert rule.alert_check_name == "ipmi"
 
 
 def test_prometheus(prometheus_rules_json):

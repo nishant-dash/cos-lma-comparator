@@ -7,30 +7,31 @@ from .nrpedata import NRPEData
 
 
 class PrometheusRule(NRPEData):
-    def __init__(self, prometheus_rule_json):
+    def __init__(self, prometheus_rule_json, nagios_context=None):
         super().__init__()
 
         self.set_json(prometheus_rule_json)
+        self.nagios_context = nagios_context
 
         # self.juju_model = self._labels.get("juju_model", None)
-        self.juju_unit = self._labels.get("nrpe_unit", None)
-
-        if self.is_nrpe_rule():
-            self.alert_check_name = self.__extract_command()
+        __juju_unit = self._labels.get("juju_unit", None)
+        if __juju_unit:
+            self.juju_unit = __juju_unit.replace('/','-')
+        self.alert_check_name = self.__extract_command()
 
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)
         if extract_command:
-            return extract_command.group(1)
+            return extract_command.group(1).replace('check_','')
         else:
-            raise Exception("Could not parse command from prometheus output: {}".format(self._query))
+            return ""
 
     def is_nrpe_rule(self):
         return self._name.endswith("NrpeAlert")
 
 
 class PrometheusRules:
-    def __init__(self, prometheus_rules_json):
+    def __init__(self, prometheus_rules_json, nagios_context=None):
         '''
         Parse the raw dictionary from Prometheus and return a list of rules as
         PrometheusAlertRule objects.
@@ -41,7 +42,7 @@ class PrometheusRules:
 
         for group in prometheus_rules_json["data"]["groups"]:
             for r in group['rules']:
-                nrpe_data = PrometheusRule(r)
+                nrpe_data = PrometheusRule(r, nagios_context)
                 nrpe_data._group_name = group["name"]
                 nrpe_data._group_file = group["file"]
                 if nrpe_data.is_nrpe_rule():

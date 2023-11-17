@@ -11,7 +11,7 @@ def nagios_services_json():
 
 def test_nagios_service(nagios_services_json):
     service = NagiosService(nagios_services_json[200], "bootstack-abc-defg")
-    assert service.juju_unit == "ceph-radosgw/1"
+    assert service.juju_unit == "bootstack-abc-defg-ceph-radosgw-1"
     assert service.alert_check_name == "pacemakerd_proc"
 
 

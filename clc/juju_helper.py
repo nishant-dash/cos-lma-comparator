@@ -30,7 +30,7 @@ def juju_ssh(
         f"{app_name}/leader",
         command
     ]
-    logging.info(f"Running {cmd}")
+    logging.info(f"Running {' '.join(cmd)}")
     output = run(cmd, stdout=PIPE, stderr=DEVNULL, text=True)
 
     return output.stdout
@@ -61,7 +61,7 @@ def juju_run_action(
         command
     ]
 
-    logging.info(f"Running {cmd}")
+    logging.info(f"Running {' '.join(cmd)}")
     output = run(cmd, stdout=PIPE, stderr=DEVNULL)
     output = output.stdout.decode('utf-8')
     output_yaml = ""
@@ -88,6 +88,6 @@ def juju_config(
         f"{app_name}",
         f"{config}",
     ]
-    logging.info(f"Retrieve config: {cmd}")
+    logging.info(f"Retrieve config: {' '.join(cmd)}")
     output = run(cmd, stdout=PIPE, stderr=DEVNULL, text=True)
     return output.stdout.strip()

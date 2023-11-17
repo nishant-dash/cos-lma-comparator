@@ -74,7 +74,6 @@ def main():
         args.juju_lma_model,
         args.juju_lma_user,
     )
-    logging.debug(nagios_services_json)
 
     if not args.nagios_context:
         nagios_context = juju_config(
@@ -97,10 +96,16 @@ def main():
         args.juju_cos_model,
         args.juju_cos_user,
     )
-    logging.debug(prometheus_rules_json)
-    prometheus_rules = PrometheusRules(prometheus_rules_json)
+    prometheus_rules = PrometheusRules(prometheus_rules_json, nagios_context)
 
+    print()
+    print("Prometheus Duplicates")
+    print("=====================")
     identify_duplicates(prometheus_rules.alerts())
+
+    print()
+    print("Nagios Duplicates")
+    print("=================")
     identify_duplicates(nagios_services.alerts())
 
     diff_output = compare(

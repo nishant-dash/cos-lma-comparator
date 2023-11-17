@@ -21,10 +21,15 @@ def show_diff(diff_output, out_format, long_format):
     if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
 
-    print("Rules missing from prometheus")
+    missing_alerts = diff_output["missing_alerts"]
+    extra_alerts = diff_output["extra_alerts"]
+    common_alerts = diff_output["common_alerts"]
+    disagreements = diff_output["disagreements"]
+
+    print("Rules missing in prometheus")
     print("=============================")
     print_truncatable_list(
-        sorted(diff_output["missing_alerts"]),
+        sorted(missing_alerts),
         lambda alert: print(alert),
         long_format,
     )
@@ -33,7 +38,7 @@ def show_diff(diff_output, out_format, long_format):
     print("Extra rules in prometheus not present in nagios")
     print("===============================================")
     print_truncatable_list(
-        sorted(diff_output["extra_alerts"]),
+        sorted(extra_alerts),
         lambda alert: print(alert),
         long_format,
     )
@@ -42,11 +47,17 @@ def show_diff(diff_output, out_format, long_format):
     print("Alerts with different alert status")
     print("==================================")
     print_truncatable_list(
-        sorted(diff_output["disagreements"]),
+        sorted(disagreements),
         lambda output: print(output),
         long_format,
     )
     print()
+
+    print(f"extra_alerts: {len(extra_alerts)}")
+    print(f"missing_alerts: {len(missing_alerts)}")
+    print(f"common_alerts: {len(common_alerts)}")
+    print(f"disagreements: {len(disagreements)}")
+
 
 
 def show_summary(summary, out_format):

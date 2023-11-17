@@ -13,24 +13,25 @@ def compare(left_alerts, right_alerts):
     right_alerts: set of NRPEData
     """
 
-    left_defs  = set(left_alerts)
-    right_defs = set(right_alerts)
+    prometheus_alerts  = set(left_alerts)
+    nagios_alerts = set(right_alerts)
 
-    extra_defs = left_defs - right_defs
-    missing_defs = right_defs - left_defs
-    common_defs = left_defs & right_defs
+    # Alerts in prometheus, but no in nagios
+    extra_alerts = prometheus_alerts - nagios_alerts
 
-    logging.info(f"extra_alerts: {len(extra_defs)}")
-    logging.info(f"missing_alerts: {len(missing_defs)}")
-    logging.info(f"common_alerts: {len(common_defs)}")
+    # Alerts in nagios, but no in prometheus
+    missing_alerts = nagios_alerts - prometheus_alerts
+
+    # Alerts common to both nagios and prometheus
+    common_alerts = prometheus_alerts & nagios_alerts
 
     # Only the common alerts can be compared for their exact values
     disagreements = []
-    for alert_def in common_defs:
-        # Find it in the left and right defs - note the [0] at the end
+    for alert_def in common_alerts:
+        # Find it in the left and right alerts - note the [0] at the end
         # as there should be guaranteed to be exactly one alert.
-        prom_alert = [x for x in left_alerts if x == alert_def][0]
-        right_alert = [x for x in right_alerts if x == alert_def][0]
+        prom_alert = [x for x in prometheus_alerts if x == alert_def][0]
+        right_alert = [x for x in nagios_alerts if x == alert_def][0]
 
         if right_alert.alert_state != prom_alert.alert_state:
             disagreements.append({
@@ -43,8 +44,9 @@ def compare(left_alerts, right_alerts):
         # print("{} vs {} for {}".format(right_alert.alert_state, prom_alert.alert_state, alert_def))
 
     return {
-        "missing_alerts": missing_defs,
-        "extra_alerts": extra_defs,
+        "missing_alerts": missing_alerts,
+        "extra_alerts": extra_alerts,
+        "common_alerts": common_alerts,
         "disagreements": disagreements,
     }
 
@@ -58,10 +60,8 @@ def identify_duplicates(alerts):
     seen = set()
     dupes = [alert for alert in alerts if alert in seen or seen.add(alert)]
 
-    print()
-    print("Duplicate alerts")
-    print("==============")
     [print(str(k), dupes.count(k) + 1) for k in set(dupes)]
+    print()
 
     return dupes
 

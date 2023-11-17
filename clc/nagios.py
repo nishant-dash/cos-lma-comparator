@@ -13,20 +13,22 @@ class NagiosService(NRPEData):
         self.nagios_context = nagios_context
 
         self.juju_unit = self.__extract_unit_name()
-        self.alert_check_name = self.__extract_check_command()
+        self.alert_check_name = self.__extract_command()
 
     def __context_match(self):
         return bool(re.search(self.nagios_context, self._host_display_name))
 
     def __extract_unit_name(self):
-        if self.__context_match():
-            names = self._host_display_name[len(self.nagios_context)+1:].split('-')
-            return '-'.join(names[:-1]) + '/' + names[-1]
-        else:
-            return self._host_display_name
+        return self._host_display_name
+        names = self._host_display_name.split('-')
+        return '-'.join(names[:-1]) + '/' + names[-1]
 
-    def __extract_check_command(self):
-        return self._display_name[len(self.nagios_context)+1+len(self.juju_unit)+1:]
+    def __extract_command(self):
+        extract_command = re.search(f"{self._host_display_name}-(.*)", self._display_name)
+        if extract_command:
+            return extract_command.group(1).replace('check_', '')
+        else:
+            return ""
             #raise Exception("Could not parse command from nagios display_name: {}".format(self._display_name))
 
     def __extract_app_name(self):
@@ -39,7 +41,9 @@ class NagiosServices:
         self._alerts = []
 
         for service in nagios_services_json:
-            self._alerts.append(NagiosService(service, nagios_context))
+            nagios_service = NagiosService(service, nagios_context)
+            if nagios_service.alert_check_name != "":
+                self._alerts.append(nagios_service)
 
     def alerts(self):
         return list(self._alerts)
