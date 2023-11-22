@@ -1,3 +1,9 @@
+"""COS LMA Completeness checker
+
+This script compares the alerts defined by COS Prometheus rules with
+LMA Nagios services.
+
+"""
 import logging
 import argparse
 
@@ -10,7 +16,12 @@ from .juju_helper import juju_config
 
 def parser():
     parser = argparse.ArgumentParser(
-        description='COS LMA Completeness checker',
+        prog='clc',
+        description="""
+        This script compares the alerts defined by COS Prometheus rules with
+        LMA Nagios services.
+        """,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
     parser.add_argument('--juju-lma-controller',
@@ -19,7 +30,7 @@ def parser():
 
     parser.add_argument('--juju-lma-user',
                         default='admin',
-                        help='Juju user')
+                        help='Juju LMA user')
 
     parser.add_argument('--juju-lma-model',
                         default='lma-maas',
@@ -35,40 +46,56 @@ def parser():
 
     parser.add_argument('--juju-cos-user',
                         default='admin',
-                        help='Juju user')
+                        help='Juju COS user')
 
     parser.add_argument('--nagios-context',
                         default=None,
-                        help='nagios_host_config from `juju config nagios \
-                        nagios_host_config`')
+                        help="""Automatically detected from LMA Nagios config
+                        nagios_host_config i.e. `juju config nagios
+                        nagios_host_config`. Use this argument to override
+                        auto-detection.
+                        """)
 
     parser.add_argument('--prometheus-url',
                         default=None,
-                        help='Instead of auto-detecting the location of \
-                        prometheus, use a given URL')
+                        help="""Automatically detected from COS
+                        Traefik/Prometheus.
+                        Use this argument to override auto-detection.
+                        """)
 
     parser.add_argument('-f', '--format',
+                        choices=['plain', 'json'],
                         default='plain',
                         help='Format for the output')
 
-    parser.add_argument('-v', '--verbose',
-                        action='store_true',
-                        default=False,
-                        help='Enable verbose output')
-
     parser.add_argument('--long',
                         action='store_true',
-                        help="Don't shorten the list of alerts")
+                        help="""Don't shorten the list of alerts. Print all the
+                        duplicates, missing and extra alerts.
+                        """)
+
+    parser.add_argument('-d', '--debug',
+                        action="store_const", dest="loglevel",
+                        const=logging.DEBUG,
+                        default=logging.WARNING,
+                        help="Print debugging statements",)
+
+    parser.add_argument('-v', '--verbose',
+                        action="store_const", dest="loglevel",
+                        const=logging.INFO,
+                        help="Be verbose",)
+
     return parser
 
 
 def main():
     args = parser().parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=args.loglevel)
     ws_logger = logging.getLogger('websockets.protocol')
-    ws_logger.setLevel(logging.INFO)
+    ws_logger.setLevel(logging.WARNING)
 
+    # Fetch Nagios services from thruk-admin API
     nagios_services_json = get_nagios_data(
         args.juju_lma_controller,
         args.juju_lma_model,
@@ -85,17 +112,19 @@ def main():
         )
     else:
         nagios_context = args.nagios_context
-
     logging.info(f"nagios_context: {nagios_context}")
 
+    # Parse Nagios services to NRPE alerts
     nagios_services = NagiosServices(nagios_services_json, nagios_context)
 
+    # Fetch Prometheus rules from Prometheus API
     prometheus_rules_json = get_prometheus_data(
         args.prometheus_url,
         args.juju_cos_controller,
         args.juju_cos_model,
         args.juju_cos_user,
     )
+    # Parse Prometheus services to NRPE alerts
     prometheus_rules = PrometheusRules(prometheus_rules_json, nagios_context)
 
     print()
@@ -115,8 +144,7 @@ def main():
     summary_output = summary(prometheus_rules.alerts())
 
     # TODO: Pretty print or json output
-
-    if args.verbose:
+    if args.loglevel == logging.INFO:
         list_rules(prometheus_rules.alerts(), args.format, args.long)
 
     # TODO: Always show both diff and summary - but later make this listen to

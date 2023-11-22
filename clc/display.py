@@ -11,7 +11,7 @@ def list_rules(alerts, out_format, long_format):
 
     print_truncatable_list(
         alerts,
-        lambda alert: print("Alert {}".format(alert.definition())),
+        lambda alert: print("Alert {}".format(alert)),
         long_format,
     )
     print()
@@ -59,7 +59,6 @@ def show_diff(diff_output, out_format, long_format):
     print(f"disagreements: {len(disagreements)}")
 
 
-
 def show_summary(summary, out_format):
     if out_format != "plain":
         raise NotImplementedError("Non-plain output for all alerts is TODO")
@@ -72,7 +71,8 @@ def print_truncatable_list(lst, print_func, long_format):
     if not long_format and len(lst) > TRUNCATE_THRESHOLD:
         for item in lst[:truncate_amount]:
             print_func(item)
-        print("..... {} rules omitted .....".format(len(lst) - truncate_amount*2))
+        print(f"... {len(lst) - truncate_amount*2} rules omitted,\
+              use `--long` to show them ...")
         for item in lst[-truncate_amount:]:
             print_func(item)
     else:

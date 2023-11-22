@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import requests
 
@@ -7,7 +8,25 @@ from .nrpedata import NRPEData
 
 
 class PrometheusRule(NRPEData):
-    def __init__(self, prometheus_rule_json, nagios_context=None):
+    """PrometheusRule define an alert coming from Prometheus.
+
+    Args:
+        prometheus_service_json: A single rule element from Prometheus API json
+            output
+        nagios_context: A string that is prepended to instance name to set the
+            host name in nagios.
+
+    Attributes:
+        _{*}: All attributes parsed from json are available to the class
+            instance as `_attribute_name`. i.e. self._host_name
+        nagios_context: Same as args.
+        alert_identifier: Alert identifier use to match
+            {nagios_context}-{app_name}-{unit_number},
+            i.e. bootstack-foo-bar-mysql-0
+        alert_check_name: Alert command name without the prefix `check_`.
+            i.e.: load
+    """
+    def __init__(self, prometheus_rule_json, nagios_context):
         super().__init__()
 
         self.set_json(prometheus_rule_json)
@@ -16,14 +35,18 @@ class PrometheusRule(NRPEData):
         # self.juju_model = self._labels.get("juju_model", None)
         __juju_unit = self._labels.get("juju_unit", None)
         if __juju_unit:
-            self.juju_unit = __juju_unit.replace('/','-')
+            self.alert_identifier = __juju_unit.replace('/', '-')
+            self.juju_unit = __juju_unit.replace(nagios_context+'-', '')
+
         self.alert_check_name = self.__extract_command()
 
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)
         if extract_command:
-            return extract_command.group(1).replace('check_','')
+            return extract_command.group(1).replace('check_', '')
         else:
+            logging.debug(f"Could not parse prometheus rule command: \
+                            {self._query}")
             return ""
 
     def is_nrpe_rule(self):
@@ -33,10 +56,13 @@ class PrometheusRule(NRPEData):
 class PrometheusRules:
     def __init__(self, prometheus_rules_json, nagios_context=None):
         '''
-        Parse the raw dictionary from Prometheus and return a list of rules as
-        PrometheusAlertRule objects.
+        Parse the raw dictionary from Prometheus /rules API and store each rule
+        as PrometheusRule objects.
 
-        prom_raw - the json parsed input from the prometheus endpoint
+        Args:
+            prometheus_rules_json: JSON when querying Prometheus /api/v1/rules
+            nagios_context: A string that is prepended to instance name to set
+                the host name in nagios.
         '''
         self._alerts = []
 
@@ -57,7 +83,8 @@ def get_prometheus_url(
     juju_cos_model,
     juju_cos_user,
 ):
-    traefik_proxied_endpoints_action_raw = juju_helper.juju_run_action(
+    """Fetch into Traefik juju application the prometheus URL"""
+    traefik_proxied_endpoints_raw = juju_helper.juju_run_action(
             controller_name=juju_cos_controller,
             model_name=juju_cos_model,
             user=juju_cos_user,
@@ -65,9 +92,9 @@ def get_prometheus_url(
             command='show-proxied-endpoints'
     )
 
-    first_key = list(traefik_proxied_endpoints_action_raw.keys())[0]
+    first_key = list(traefik_proxied_endpoints_raw.keys())[0]
     traefik_proxied_endpoints_json = json.loads(
-        traefik_proxied_endpoints_action_raw[first_key]['results']['proxied-endpoints']
+        traefik_proxied_endpoints_raw[first_key]['results']['proxied-endpoints' ]
     )
 
     for k, v in traefik_proxied_endpoints_json.items():
@@ -83,15 +110,14 @@ def get_prometheus_data(
     juju_cos_model=None,
     juju_cos_user=None,
 ):
-    '''
-    Fetch the list of all rules from the Prometheus endpoint and return it as a
-    parsed dictionary.
+    """Fetch the list of all rules from the Prometheus endpoint and return it
+    as a parsed dictionary.
 
     prometheus_url: string - the prometheus endpoint without trailing slash,
-    e.g. http://10.123.456.78:80/cos-prometheus-0
+        e.g. http://10.123.456.78:80/cos-prometheus-0
 
     If prometheus_url is None it will try to retrieve the URL from COS model
-    '''
+    """
     if prometheus_url is None:
         url = get_prometheus_url(
             juju_cos_controller,

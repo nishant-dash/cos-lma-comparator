@@ -11,10 +11,13 @@ def prometheus_rules_json():
 
 
 def test_prometheus_rule(prometheus_rules_json):
-    rule = PrometheusRule(prometheus_rules_json["data"]["groups"][200]["rules"][0])
-    assert rule.juju_unit == "bootstack-hijk-lmn-opqrst-storage-6"
+    rule = PrometheusRule(
+        prometheus_rules_json["data"]["groups"][200]["rules"][0],
+        "bootstack-hijk-lmn-opqrst")
+    assert rule.alert_identifier == "bootstack-hijk-lmn-opqrst-storage-6"
     assert rule.alert_check_name == "ipmi"
+    assert rule.juju_unit == "storage/6"
 
 
 def test_prometheus(prometheus_rules_json):
-    assert PrometheusRules(prometheus_rules_json)
+    assert PrometheusRules(prometheus_rules_json, "bootstack-hijk-lmn-opqrst")

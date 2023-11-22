@@ -112,24 +112,24 @@ def nagios_service_json():
 
 def test_nrpedata():
     alert = NRPEData(juju_model="model",
-                     juju_unit="app-unit/0",
+                     alert_identifier="app-unit-0",
                      alert_check_name="check-name",
                      alert_state=0,
                      alert_time=1)
 
     assert str(NRPEData()) == "::::"
-    assert str(alert) == "model:app-unit/0:check-name:0:1"
+    assert str(alert) == "model:app-unit-0:check-name:0:1"
 
 
 def test_nrpedata_eq():
 
     alert1 = NRPEData(juju_model="model",
-                      juju_unit="app-unit/0",
+                      alert_identifier="app-unit-0",
                       alert_check_name="check-name",
                       alert_time=1)
 
     alert2 = NRPEData(juju_model="model",
-                      juju_unit="app-unit/0",
+                      alert_identifier="app-unit-0",
                       alert_check_name="check-name",
                       alert_time=1)
 

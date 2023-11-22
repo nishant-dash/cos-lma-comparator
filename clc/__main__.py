@@ -1,9 +1,5 @@
 """Main entry point."""
-from . import cli
-
-def main() -> None:
-    """Enter the application."""
-    cli.main()
+from .cli import main
 
 
 if __name__ == "__main__":

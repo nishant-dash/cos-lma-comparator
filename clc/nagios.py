@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 
 from . import juju_helper
@@ -6,30 +7,50 @@ from .nrpedata import NRPEData
 
 
 class NagiosService(NRPEData):
+    """NagiosService define an alert coming from nagios.
+
+    Args:
+        nagios_service_json: A single element from Nagios /services json output
+        nagios_context: A string that is prepended to instance name to set the
+            host name in nagios.
+
+    Attributes:
+        _{*}: All attributes parsed from json are available to the class
+            instance as `_attribute_name`. i.e. self._host_name
+        nagios_context: Same as args.
+        alert_identifier: Alert identifier {nagios_context}-{app_name}-{unit_number},
+            i.e. bootstack-foo-bar-mysql-0
+        alert_check_name: Alert command name without the prefix `check_`.
+            i.e.: load
+        juju_unit: Best effort on extracting juju unit name from alerts
+    """
+
     def __init__(self, nagios_service_json, nagios_context=None):
         super().__init__()
         self.set_json(nagios_service_json)
 
         self.nagios_context = nagios_context
 
+        self.alert_identifier = self._host_display_name
         self.juju_unit = self.__extract_unit_name()
         self.alert_check_name = self.__extract_command()
 
-    def __context_match(self):
-        return bool(re.search(self.nagios_context, self._host_display_name))
-
     def __extract_unit_name(self):
-        return self._host_display_name
-        names = self._host_display_name.split('-')
-        return '-'.join(names[:-1]) + '/' + names[-1]
+        extract_unit = re.search(f"{self.nagios_context}-(.*)-[0-9]+",
+                                 self._host_display_name)
+        if extract_unit:
+            names = self._host_display_name.split('-')
+            return extract_unit.group(1) + '/' + names[-1]
 
     def __extract_command(self):
-        extract_command = re.search(f"{self._host_display_name}-(.*)", self._display_name)
+        extract_command = re.search(f"{self._host_display_name}-(.*)",
+                                    self._display_name)
         if extract_command:
             return extract_command.group(1).replace('check_', '')
         else:
+            logging.debug(f"Could not parse nagios command: \
+                            {self._display_name}")
             return ""
-            #raise Exception("Could not parse command from nagios display_name: {}".format(self._display_name))
 
     def __extract_app_name(self):
         if self.juju_unit:
@@ -54,6 +75,7 @@ def get_nagios_data(
     juju_lma_model,
     juju_lma_user,
 ):
+    """Use juju ssh to query nagios API using thruk CLI agent"""
     nagios_services = juju_helper.juju_ssh(
         controller_name=juju_lma_controller,
         model_name=juju_lma_model,
