@@ -75,7 +75,7 @@ class PrometheusRules:
                     self._alerts.append(nrpe_data)
 
     def alerts(self):
-        return list(self._alerts)
+        return sorted(list(self._alerts))
 
 
 def get_prometheus_url(

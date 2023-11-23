@@ -9,7 +9,7 @@ import argparse
 
 from .nagios import get_nagios_data, NagiosServices
 from .prometheus import get_prometheus_data, PrometheusRules
-from .display import list_rules, show_diff, show_summary
+from .display import list_rules, show_diff, show_summary, show_json
 from .comparator import compare, summary, identify_duplicates
 from .juju_helper import juju_config
 
@@ -127,24 +127,28 @@ def main():
     # Parse Prometheus services to NRPE alerts
     prometheus_rules = PrometheusRules(prometheus_rules_json, nagios_context)
 
-    print()
-    print("Prometheus Duplicates")
-    print("=====================")
-    identify_duplicates(prometheus_rules.alerts())
-
-    print()
-    print("Nagios Duplicates")
-    print("=================")
-    identify_duplicates(nagios_services.alerts())
-
     diff_output = compare(
         prometheus_rules.alerts(), nagios_services.alerts()
     )
+
+    if args.format == 'json':
+        print(show_json(diff_output))
+        return
 
     summary_output = summary(prometheus_rules.alerts())
 
     # TODO: Pretty print or json output
     if args.loglevel == logging.INFO:
+        print()
+        print("Prometheus Duplicates")
+        print("=====================")
+        identify_duplicates(prometheus_rules.alerts())
+
+        print()
+        print("Nagios Duplicates")
+        print("=================")
+        identify_duplicates(nagios_services.alerts())
+
         list_rules(prometheus_rules.alerts(), args.format, args.long)
 
     # TODO: Always show both diff and summary - but later make this listen to

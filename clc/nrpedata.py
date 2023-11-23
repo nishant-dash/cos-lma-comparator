@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -29,6 +30,9 @@ class NRPEData:
         """Convert every JSON attribute to a private object attribute."""
         for k, v in raw_alert_json.items():
             setattr(self, "_" + k, v)
+
+    def to_json(self):
+        return json.dumps(asdict(self))
 
     def __str__(self):
         return ":".join([

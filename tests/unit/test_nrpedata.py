@@ -146,3 +146,11 @@ def test_nagios_prom_rules(prom_rule_json, nagios_service_json):
     nagios_service = NagiosService(nagios_service_json, "bootstack-hijk-lmn")
 
     assert prom_rule == nagios_service
+
+
+def test_to_json(prom_rule_json, nagios_service_json):
+    prom_rule = PrometheusRule(prom_rule_json, "bootstack-hijk-lmn")
+    nagios_service = NagiosService(nagios_service_json, "bootstack-hijk-lmn")
+
+    assert json.loads(prom_rule.to_json())
+    assert json.loads(nagios_service.to_json())

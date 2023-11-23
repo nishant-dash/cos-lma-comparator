@@ -9,4 +9,7 @@ cd cos-lma-comparator
 pip install --no-build -e .
 
 clc --help
+
+# Examples
+clc --juju-cos-controller microk8s-controller
 ```
