@@ -9,7 +9,8 @@ import argparse
 
 from .nagios import get_nagios_data, NagiosServices
 from .prometheus import get_prometheus_data, PrometheusRules
-from .display import list_rules, show_diff, show_summary, show_json
+from .display import list_rules, show_diff, show_summary, show_json, \
+                     print_title
 from .comparator import compare, summary, identify_duplicates
 from .juju_helper import juju_config
 
@@ -139,14 +140,12 @@ def main():
 
     # TODO: Pretty print or json output
     if args.loglevel == logging.INFO:
+        print_title("Prometheus Duplicates")
         print()
-        print("Prometheus Duplicates")
-        print("=====================")
         identify_duplicates(prometheus_rules.alerts())
 
+        print_title("Nagios Duplicates")
         print()
-        print("Nagios Duplicates")
-        print("=================")
         identify_duplicates(nagios_services.alerts())
 
         list_rules(prometheus_rules.alerts(), args.format, args.long)
@@ -154,7 +153,7 @@ def main():
     # TODO: Always show both diff and summary - but later make this listen to
     # options
     show_diff(diff_output, args.format, args.long)
-    show_summary(summary_output, args.format)
+    # show_summary(summary_output, args.format)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,13 @@ import json
 from dataclasses import dataclass, asdict
 
 
+STATUS = {
+  "OK": 0,
+  "Warning": 1,
+  "Critical": 2,
+  "Unknown": 3,
+}
+
 @dataclass
 class NRPEData:
     """Common class to compare alerts from Nagios services and Prometheus alert

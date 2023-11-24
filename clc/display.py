@@ -1,3 +1,4 @@
+import json
 from .nrpedata import NRPEData
 
 TRUNCATE_THRESHOLD = 20
@@ -63,6 +64,8 @@ def show_summary(summary, out_format):
 
 
 def print_truncatable_list(title, lst, print_func, long_format):
+    if not lst:
+        return
     print_title(title)
 
     prev_alert = NRPEData()
@@ -86,12 +89,12 @@ def show_json(diff_output):
     common_alerts = diff_output["common_alerts"]
     disagreements = diff_output["disagreements"]
 
-    return {
+    return json.dump({
         "missing_alerts": dict(map(lambda x: x.to_json(), missing_alerts)),
         "extra_alerts": dict(map(lambda x: x.to_json(), extra_alerts)),
         "common_alerts": dict(map(lambda x: x.to_json(), common_alerts)),
         "disagreements": dict(map(lambda x: x.to_json(), disagreements)),
-    }
+    })
 
 
 def print_title(title):
