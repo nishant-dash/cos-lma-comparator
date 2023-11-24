@@ -37,9 +37,7 @@ def compare(left_alerts, right_alerts):
             disagreements.append({
                 "definition": str(alert_def),
                 "left_state": prom_alert.alert_state,
-                "left_time": prom_alert.alert_time,
                 "right_state": right_alert.alert_state,
-                "right_time": right_alert.alert_time,
             })
         # print("{} vs {} for {}".format(right_alert.alert_state, prom_alert.alert_state, alert_def))
 

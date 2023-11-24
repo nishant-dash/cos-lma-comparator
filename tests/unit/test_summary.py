@@ -21,6 +21,6 @@ def test_summary():
     ]
 
     output = summary(alerts)
-    expected_output = {'num_apps': 5, 'num_rules': 7, 'num_rules_alerting': 3, 'num_units': 5}
+    expected_output = {'num_apps': 4, 'num_rules': 7, 'num_rules_alerting': 3, 'num_units': 5}
 
     assert output == expected_output

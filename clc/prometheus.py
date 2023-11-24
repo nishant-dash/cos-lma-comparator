@@ -39,6 +39,13 @@ class PrometheusRule(NRPEData):
             self.juju_unit = __juju_unit.replace(nagios_context+'-', '')
 
         self.alert_check_name = self.__extract_command()
+        self.alert_state = self.__extract_alert_state()
+
+    def __extract_alert_state(self):
+        if hasattr(self, '_alerts') and self._alerts:
+            return int(float(self._alerts[-1]["value"]))
+        else:
+            return 0
 
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)
