@@ -3,7 +3,8 @@ import logging
 
 from subprocess import run, PIPE, DEVNULL
 
-JUJU = "/snap/bin/juju"
+#JUJU = "/var/lib/snapd/hostfs/snap/juju/current/bin/juju"
+JUJU = "juju"
 
 
 # function to query charmhub with juju to get version numbers for apps
