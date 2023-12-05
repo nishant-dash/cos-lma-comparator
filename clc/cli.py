@@ -38,7 +38,7 @@ def parser():
                         help='Juju LMA model')
 
     parser.add_argument('--juju-cos-controller',
-                        default='microk8s-cos',
+                        default='cos-microk8s-localhost',
                         help='Juju COS controller')
 
     parser.add_argument('--juju-cos-model',

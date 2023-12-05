@@ -49,7 +49,6 @@ def show_diff(diff_output, out_format, long_format):
     )
 
     print_title("Summary")
-    print()
     print(f"extra_alerts: {len(extra_alerts)}")
     print(f"missing_alerts: {len(missing_alerts)}")
     print(f"common_alerts: {len(common_alerts)}")
@@ -74,7 +73,7 @@ def print_truncatable_list(title, lst, print_func, long_format):
             if prev_alert.alert_identifier != item.alert_identifier:
                 print()
                 print(item.alert_identifier, end=': ')
-            print(item.alert_check_name, end=' ')
+            print(f"{item.alert_check_name}:{item.alert_state}", end=' ')
             prev_alert = item
         print()
     else:
@@ -100,4 +99,4 @@ def show_json(diff_output):
 def print_title(title):
     print("-" * len(title))
     print(title)
-    print("-" * len(title), end='')
+    print("-" * len(title))

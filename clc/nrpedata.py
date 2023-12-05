@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass, asdict
 
 
-STATUS = {
+STATE = {
   "OK": 0,
   "Warning": 1,
   "Critical": 2,
@@ -69,5 +69,8 @@ class NRPEData:
         return isinstance(other, NRPEData) and \
             self.juju_model == other.juju_model and \
             self.alert_identifier == other.alert_identifier and \
-            self.alert_check_name == other.alert_check_name and \
-            self.alert_state == other.alert_state
+            self.alert_check_name == other.alert_check_name
+
+    def state(self):
+        if self.alert_state:
+            return STATE[self.alert_state]
