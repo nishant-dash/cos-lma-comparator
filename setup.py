@@ -29,4 +29,3 @@ def find_version() -> str:
 
 
 setup(version=find_version())
-

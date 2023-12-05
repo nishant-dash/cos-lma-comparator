@@ -1,50 +1,29 @@
 name: cos-lma-comparator
 base: core22
-adopt-info: clc
+version: '0.1'
 summary: Tool to compare nrpe data between LMA and COS
-license: AGPL-3.0
 description: |
-  This tool aims to provide a means to compare alert presence and completeness
+  This tool aims to provide a mean to compare alert presence and completeness
   between the old LMA stack and the newer COS stack.
+license: AGPL-3.0
 
 grade: devel
-confinement: strict
+confinement: devmode
+
+parts:
+  clc:
+    plugin: python
+    source: .
 
 apps:
   clc:
-    command: bin/clc.wrapper
-#    completer: etc/bash_completion.d/snap.clc
+    command: bin/clc
     plugs:
       - juju-client-observe
       - network
       - network-bind
       - ssh-public-keys
       - dot-local-share-juju
-
-parts:
-  clc-wrapper:
-    plugin: dump
-    source: bin
-    organize:
-      clc.wrapper: bin/clc.wrapper
-
-  clc:
-    plugin: python
-    build-packages:
-      - python3-wheel
-      - python3-pip
-      - python3-setuptools-scm
-    source: .
-    stage-packages:
-      - git
-    override-build: |
-      craftctl default
-      set -e
-
-      # set version
-      VERSION=$(python3 setup.py --version)
-      echo "Version: ${VERSION}"
-      craftctl set version=${VERSION}
 
 plugs:
   dot-local-share-juju:
