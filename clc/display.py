@@ -42,7 +42,7 @@ def show_diff(diff_output, out_format, long_format):
     )
 
     print_truncatable_list(
-        "Alerts with different alert status",
+        "Alerts with different state",
         sorted(disagreements),
         lambda alert: print(alert),
         long_format,

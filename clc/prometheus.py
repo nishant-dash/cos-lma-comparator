@@ -32,7 +32,6 @@ class PrometheusRule(NRPEData):
         self.set_json(prometheus_rule_json)
         self.nagios_context = nagios_context
 
-        # self.juju_model = self._labels.get("juju_model", None)
         __juju_unit = self._labels.get("juju_unit", None)
         if __juju_unit:
             self.alert_identifier = __juju_unit.replace('/', '-')
@@ -40,6 +39,8 @@ class PrometheusRule(NRPEData):
 
         self.alert_check_name = self.__extract_command()
         self.alert_state = self.__extract_alert_state()
+
+        logging.debug(f"{__juju_unit} {self._query}")
 
     def __extract_alert_state(self):
         if hasattr(self, '_alerts') and self._alerts:
@@ -52,7 +53,7 @@ class PrometheusRule(NRPEData):
         if extract_command:
             return extract_command.group(1).replace('check_', '')
         else:
-            logging.debug(f"Could not parse prometheus rule command: \
+            logging.info(f"Could not parse prometheus rule command: \
                             {self._query}")
             return ""
 

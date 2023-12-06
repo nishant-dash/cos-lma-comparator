@@ -1,5 +1,3 @@
-import logging
-
 
 def compare(left_alerts, right_alerts):
     """
@@ -13,7 +11,7 @@ def compare(left_alerts, right_alerts):
     right_alerts: set of NRPEData
     """
 
-    prometheus_alerts  = set(left_alerts)
+    prometheus_alerts = set(left_alerts)
     nagios_alerts = set(right_alerts)
 
     # Alerts in prometheus, but no in nagios
@@ -25,21 +23,17 @@ def compare(left_alerts, right_alerts):
     # Alerts common to both nagios and prometheus
     common_alerts = prometheus_alerts & nagios_alerts
 
-    # Only the common alerts can be compared for their exact values
-    disagreements = []
-    for alert_def in common_alerts:
-        # Find it in the left and right alerts - note the [0] at the end
-        # as there should be guaranteed to be exactly one alert.
-        prom_alert = [x for x in prometheus_alerts if x == alert_def][0]
-        right_alert = [x for x in nagios_alerts if x == alert_def][0]
+    disagreements = set()
+    for alert in missing_alerts.copy():
+        # If alert is in both extra and missing that's due its state diverge
+        found_alert = [x for x in extra_alerts if x.id() == alert.id()]
 
-        if right_alert.alert_state != prom_alert.alert_state:
-            disagreements.append({
-                "definition": str(alert_def),
-                "left_state": prom_alert.alert_state,
-                "right_state": right_alert.alert_state,
-            })
-        # print("{} vs {} for {}".format(right_alert.alert_state, prom_alert.alert_state, alert_def))
+        if found_alert:
+            extra_alerts.remove(found_alert[0])
+            missing_alerts.remove(alert)
+
+            disagreements.add(found_alert[0])
+            disagreements.add(alert)
 
     return {
         "missing_alerts": missing_alerts,

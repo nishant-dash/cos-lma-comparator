@@ -1,20 +1,22 @@
 import json
 from dataclasses import dataclass, asdict
+from enum import Enum
 
 
-STATE = {
-  "OK": 0,
-  "Warning": 1,
-  "Critical": 2,
-  "Unknown": 3,
-}
+class NRPEState(Enum):
+    OK = 0
+    WARNING = 1
+    CRITICAL = 2
+    UNKNOWN = 3
+
 
 @dataclass
 class NRPEData:
     """Common class to compare alerts from Nagios services and Prometheus alert
     rules
 
-    Comparison is done through `alert_identifier` and `alert_check_name` attributes
+    Comparison is done through `alert_identifier` and `alert_check_name`
+    attributes
 
     Attributes:
         alert_identifier: Alert identifier {nagios_context}-{app_name}-{unit_number},
@@ -69,8 +71,16 @@ class NRPEData:
         return isinstance(other, NRPEData) and \
             self.juju_model == other.juju_model and \
             self.alert_identifier == other.alert_identifier and \
-            self.alert_check_name == other.alert_check_name
+            self.alert_check_name == other.alert_check_name and \
+            self.alert_state == other.alert_state
 
     def state(self):
         if self.alert_state:
-            return STATE[self.alert_state]
+            return NRPEState(self.alert_state)
+
+    def id(self):
+        return ":".join([
+            str(self.juju_model or ''),
+            str(self.alert_identifier or ''),
+            str(self.alert_check_name or ''),
+        ])

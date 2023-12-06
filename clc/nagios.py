@@ -37,6 +37,8 @@ class NagiosService(NRPEData):
 
         self.alert_state = self._state
 
+        logging.debug(f"{self._host_display_name} {self._display_name}")
+
     def __extract_unit_name(self):
         extract_unit = re.search(f"{self.nagios_context}-(.*)-[0-9]+",
                                  self._host_display_name)
