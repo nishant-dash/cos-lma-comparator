@@ -92,29 +92,24 @@ def get_prometheus_url(
     juju_cos_user,
 ):
     """Fetch into Traefik juju application the prometheus URL"""
-    try:
-        traefik_proxied_endpoints_raw = juju_helper.juju_run_action(
-            controller_name=juju_cos_controller,
-            model_name=juju_cos_model,
-            user=juju_cos_user,
-            app_name='traefik',
-            command='show-proxied-endpoints'
-        )
+    traefik_proxied_endpoints_raw = juju_helper.juju_run_action(
+        controller_name=juju_cos_controller,
+        model_name=juju_cos_model,
+        user=juju_cos_user,
+        app_name='traefik',
+        command='show-proxied-endpoints'
+    )
 
-        first_key = list(traefik_proxied_endpoints_raw.keys())[0]
-        traefik_proxied_endpoints_json = json.loads(
-            traefik_proxied_endpoints_raw[first_key]['results']['proxied-endpoints' ]
-        )
+    first_key = list(traefik_proxied_endpoints_raw.keys())[0]
+    traefik_proxied_endpoints_json = json.loads(
+        traefik_proxied_endpoints_raw[first_key]['results']['proxied-endpoints' ]
+    )
 
-        for k, v in traefik_proxied_endpoints_json.items():
-            if k.startswith("prometheus"):
-                return v["url"]
-    except Exception as e:
-        print(e)
-        print("Error fetching nagios data. Please check your Juju model, controller and user")
-        return
+    for k, v in traefik_proxied_endpoints_json.items():
+        if k.startswith("prometheus"):
+            return v["url"]
 
-    raise Exception("Unable to find URL for prometheus in traefik endpoints")
+    raise Exception("Unable to find URL for prometheus in traefik endpoints.")
 
 
 def get_prometheus_data(

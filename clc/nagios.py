@@ -80,16 +80,11 @@ def get_nagios_data(
     juju_lma_user,
 ):
     """Use juju ssh to query nagios API using thruk CLI agent"""
-    try:
-        nagios_services = juju_helper.juju_ssh(
-            controller_name=juju_lma_controller,
-            model_name=juju_lma_model,
-            user=juju_lma_user,
-            app_name='thruk-agent',
-            command='sudo thruk r /services',
-        )
-        return json.loads(nagios_services)
-    except Exception as e:
-        print(e)
-        print("Error fetching nagios data. Please check your Juju model, controller and user")
-        return
+    nagios_services = juju_helper.juju_ssh(
+        controller_name=juju_lma_controller,
+        model_name=juju_lma_model,
+        user=juju_lma_user,
+        app_name='thruk-agent',
+        command='sudo thruk r /services',
+    )
+    return json.loads(nagios_services)
