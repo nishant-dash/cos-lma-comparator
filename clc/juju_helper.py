@@ -1,6 +1,7 @@
 import yaml
 import json
 import logging
+import jq
 
 from subprocess import run, PIPE, DEVNULL
 
@@ -134,3 +135,38 @@ def juju_controllers_models():
                 print("--juju-cos-model {} --juju-cos-controller {}".
                       format(model['short-name'], model['controller-name']))
     print()
+
+
+def juju_machines():
+    controllers_raw = run([juju(), "controllers", "--format", "json"],
+                          stdout=PIPE, stderr=DEVNULL, text=True)
+    controllers_json = json.loads(controllers_raw.stdout.strip())
+
+    machines = set()
+
+    for controller in controllers_json['controllers'].keys():
+        model_raw = run([juju(), "models", "--format", "json",
+                         "--controller", controller],
+                        stdout=PIPE, stderr=DEVNULL, text=True)
+        model_json = json.loads(model_raw.stdout.strip())
+        for model in model_json['models']:
+            status_raw = run([juju(), "status", "--format", "json",
+                              "--model", f"{controller}:{model['short-name']}"],
+                             stdout=PIPE, stderr=DEVNULL, text=True)
+
+            status_json = json.loads(status_raw.stdout.strip())
+
+            # import pdb; pdb.set_trace()
+            machines.update(
+                jq.compile('.machines[] | select(has("hostname")) | .hostname') \
+                .input(status_json) \
+                .all()
+            )
+
+            machines.update(
+                jq.compile('.machines[] | select(has("containers") and (.containers | length > 0)) | .containers[].hostname') \
+                .input(status_json) \
+                .all()
+            )
+
+    return machines

@@ -134,11 +134,14 @@ def check_loki_logs(
     juju_cos_model,
     juju_cos_user,
 ):
-    print(get_grafana_resources_label_hostname(
+    hostname_labels = get_grafana_resources_label_hostname(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
-    ))
+    )
+
+    juju_machines = juju_helper.juju_machines()
+    return hostname_labels, juju_machines
 
 
 def get_grafana_resources_label_hostname(
@@ -169,7 +172,7 @@ def get_grafana_resources_label_hostname(
     api = grafana_api.api.Api(api_model)
     result = api.call_the_api(query)['data']
 
-    return result
+    return set(result)
 
 
 def get_prometheus_url(
