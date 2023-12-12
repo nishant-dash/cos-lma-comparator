@@ -1,8 +1,8 @@
-import grafana_api
 import json
 import logging
 import re
 import requests
+import grafana_api.model, grafana_api.datasource
 
 from . import juju_helper
 from .nrpedata import NRPEData
@@ -124,12 +124,24 @@ def get_grafana_pass_url(
     )
 
     first_key = list(grafana_action_raw.keys())[0]
-    results = json.loads(grafana_action_raw[first_key]['results'])
+    results = grafana_action_raw[first_key]['results']
 
     return (results['admin-password'], results['url'])
 
 
 def check_loki_logs(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+    print(get_grafana_resources_label_hostname(
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
+    ))
+
+
+def get_grafana_resources_label_hostname(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
@@ -147,10 +159,17 @@ def check_loki_logs(
         host = host,
     )
 
-    datasource = grafana_api.datasource.Datasource(api_model)
+    datasources = grafana_api.datasource.Datasource(api_model)
 
-    datasource.get_all_datasources()
+    for ds in datasources.get_all_datasources():
+        if 'loki' in ds['name']:
+            query = f'api/datasources/{ds["id"]}/resources/label/hostname/values'
+            break
 
+    api = grafana_api.api.Api(api_model)
+    result = api.call_the_api(query)['data']
+
+    return result
 
 
 def get_prometheus_url(
