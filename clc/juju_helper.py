@@ -6,10 +6,12 @@ from subprocess import run, PIPE, DEVNULL
 
 
 def juju(version="2.9"):
+    return "juju"
+
     if version.startswith("2"):
-        return "/snap/bin/juju"
+        return "juju"
     elif version.startswith("3"):
-        return "/snap/bin/juju_31"
+        return "juju_31"
     else:
         raise Exception(f"Cannot infer or Unknown juju version {version}")
 
@@ -47,7 +49,7 @@ def juju_run_action(
     user="admin",
     app_name="thruk-agent",
     command=None,
-    juju_version="2.9"
+    juju_version="3.1"
 ):
     if juju_version.startswith("2"):
         run_action_cmd = ["run-action", "--wait"]
