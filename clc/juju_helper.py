@@ -49,7 +49,7 @@ def juju_run_action(
     user="admin",
     app_name="thruk-agent",
     command=None,
-    juju_version="3.1"
+    juju_version="2.9"
 ):
     if juju_version.startswith("2"):
         run_action_cmd = ["run-action", "--wait"]

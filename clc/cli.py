@@ -8,7 +8,7 @@ import logging
 import argparse
 
 from .nagios import get_nagios_data, NagiosServices
-from .prometheus import get_prometheus_data, PrometheusRules
+from .prometheus import get_prometheus_data, check_loki_logs, PrometheusRules
 from .display import list_rules, show_diff, show_summary, show_json, \
                      print_title
 from .comparator import compare, summary, identify_duplicates
@@ -86,6 +86,10 @@ def parser():
                         const=logging.INFO,
                         help="Be verbose",)
 
+    parser.add_argument('--check-loki-logs',
+                        action="store_true",
+                        help="Check if logs are available in Loki",)
+
     return parser
 
 
@@ -95,6 +99,13 @@ def main():
     logging.basicConfig(level=args.loglevel)
     ws_logger = logging.getLogger('websockets.protocol')
     ws_logger.setLevel(logging.WARNING)
+
+    if args.check_loki_logs:
+        check_loki_logs(
+            args.juju_cos_controller,
+            args.juju_cos_model,
+            args.juju_cos_user,
+        )
 
     # Fetch Nagios services from thruk-admin API
     nagios_services_json = get_nagios_data(

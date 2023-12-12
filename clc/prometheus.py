@@ -1,3 +1,4 @@
+import grafana_api
 import json
 import logging
 import re
@@ -5,6 +6,7 @@ import requests
 
 from . import juju_helper
 from .nrpedata import NRPEData
+
 
 
 class PrometheusRule(NRPEData):
@@ -86,7 +88,7 @@ class PrometheusRules:
         return sorted(list(self._alerts))
 
 
-def get_prometheus_url(
+def get_traefik_endpoint(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
@@ -102,7 +104,64 @@ def get_prometheus_url(
 
     first_key = list(traefik_proxied_endpoints_raw.keys())[0]
     traefik_proxied_endpoints_json = json.loads(
-        traefik_proxied_endpoints_raw[first_key]['results']['proxied-endpoints' ]
+        traefik_proxied_endpoints_raw[first_key]['results']['proxied-endpoints']
+    )
+
+    return traefik_proxied_endpoints_json
+
+
+def get_grafana_pass_url(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+    grafana_action_raw = juju_helper.juju_run_action(
+        controller_name=juju_cos_controller,
+        model_name=juju_cos_model,
+        user=juju_cos_user,
+        app_name='grafana',
+        command='get-admin-password'
+    )
+
+    first_key = list(grafana_action_raw.keys())[0]
+    results = json.loads(grafana_action_raw[first_key]['results'])
+
+    return (results['admin-password'], results['url'])
+
+
+def check_loki_logs(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+
+    password, host = get_grafana_pass_url(
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
+    )
+
+    api_model = grafana_api.model.APIModel(
+        username = 'admin',
+        password = password,
+        host = host,
+    )
+
+    datasource = grafana_api.datasource.Datasource(api_model)
+
+    datasource.get_all_datasources()
+
+
+
+def get_prometheus_url(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+    traefik_proxied_endpoints_json = get_traefik_endpoint(
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
     )
 
     for k, v in traefik_proxied_endpoints_json.items():
