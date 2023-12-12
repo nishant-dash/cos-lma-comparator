@@ -7,6 +7,7 @@ import grafana_api.model, grafana_api.datasource
 from . import juju_helper
 from .nrpedata import NRPEData
 
+from .display import print_title
 
 
 class PrometheusRule(NRPEData):
@@ -133,6 +134,7 @@ def check_loki_logs(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    long=False,
 ):
     hostname_labels = get_grafana_resources_label_hostname(
         juju_cos_controller,
@@ -140,8 +142,26 @@ def check_loki_logs(
         juju_cos_user,
     )
 
-    juju_machines = juju_helper.juju_machines()
-    return hostname_labels, juju_machines
+    juju_machines_raw = juju_helper.juju_machines()
+    juju_machines = set(map(lambda x: x.split(':')[-1], juju_machines_raw))
+
+    extra_machines = sorted(hostname_labels - juju_machines)
+    missing_machines = sorted(juju_machines - hostname_labels)
+    common_machines = sorted(hostname_labels & juju_machines)
+
+    if missing_machines:
+        print_title("Machines missing in Loki")
+        for machine in missing_machines:
+            [ print(m) for m in juju_machines_raw if m.endswith(machine) ]
+
+    if extra_machines:
+        print_title("Extra machines Loki")
+        [ print(m) for m in extra_machines ]
+
+    print_title("Loki Logs Summary")
+    print(f"missing_loki_machines: {len(missing_machines)}")
+    print(f"extra_loki_machines: {len(extra_machines)}")
+    print(f"common_loki_machines: {len(common_machines)}")
 
 
 def get_grafana_resources_label_hostname(
@@ -172,6 +192,7 @@ def get_grafana_resources_label_hostname(
     api = grafana_api.api.Api(api_model)
     result = api.call_the_api(query)['data']
 
+    logging.debug(f"Hostname labels {result}")
     return set(result)
 
 

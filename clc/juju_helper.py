@@ -150,23 +150,29 @@ def juju_machines():
                         stdout=PIPE, stderr=DEVNULL, text=True)
         model_json = json.loads(model_raw.stdout.strip())
         for model in model_json['models']:
+            model_name = f"{controller}:{model['short-name']}"
             status_raw = run([juju(), "status", "--format", "json",
-                              "--model", f"{controller}:{model['short-name']}"],
+                              "--model", model_name],
                              stdout=PIPE, stderr=DEVNULL, text=True)
 
             status_json = json.loads(status_raw.stdout.strip())
 
-            # import pdb; pdb.set_trace()
-            machines.update(
-                jq.compile('.machines[] | select(has("hostname")) | .hostname') \
+            hostnames = jq.compile('.machines[] \
+                                   | select(has("hostname")) \
+                                   | .hostname') \
                 .input(status_json) \
                 .all()
-            )
-
-            machines.update(
-                jq.compile('.machines[] | select(has("containers") and (.containers | length > 0)) | .containers[].hostname') \
+            containers = jq.compile('.machines[] \
+                                    | select(has("containers") \
+                                             and (.containers | length > 0)) \
+                                    | .containers[].hostname') \
                 .input(status_json) \
                 .all()
-            )
 
+            machines.update(map(lambda m: f'{model_name}:{m}', hostnames))
+            machines.update(map(lambda m: f'{model_name}:{m}', containers))
+
+            # machines.update(hostnames, containers)
+
+    logging.debug(f"Juju machines {machines}")
     return machines

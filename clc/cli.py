@@ -101,29 +101,11 @@ def main():
     ws_logger.setLevel(logging.WARNING)
 
     if args.check_loki_logs:
-        hostname_labels, juju_machines = check_loki_logs(
+        check_loki_logs(
             args.juju_cos_controller,
             args.juju_cos_model,
             args.juju_cos_user,
         )
-
-        extra_machines = sorted(hostname_labels - juju_machines)
-        missing_machines = sorted(juju_machines - hostname_labels)
-        common_machines = sorted(hostname_labels & juju_machines)
-
-        if missing_machines:
-            print_title("Machines missing in Loki")
-            [ print(x) for x in missing_machines ]
-
-        if extra_machines:
-            print_title("Extra machines Loki")
-            [ print(x) for x in extra_machines ]
-
-        print_title("Loki Logs Summary")
-        print(f"missing_loki_machines: {len(missing_machines)}")
-        print(f"extra_loki_machines: {len(extra_machines)}")
-        print(f"common_loki_machines: {len(common_machines)}")
-
         return
 
     # Fetch Nagios services from thruk-admin API
