@@ -8,10 +8,11 @@ import logging
 import argparse
 
 from .nagios import get_nagios_data, NagiosServices
-from .prometheus import get_prometheus_data, check_loki_logs, PrometheusRules
-from .display import list_rules, show_diff, show_summary, show_json, \
-                     print_title
-from .comparator import compare, summary, identify_duplicates
+from .prometheus import get_prometheus_data, PrometheusRules
+from .grafana import check_loki_hostnames, check_loki_logs_filenames
+from .display import list_rules, show_diff, show_json, \
+    print_title
+from .comparator import compare, identify_duplicates
 from .juju_helper import juju_config
 
 
@@ -86,7 +87,12 @@ def parser():
                         const=logging.INFO,
                         help="Be verbose",)
 
-    parser.add_argument('--check-loki-logs',
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--check-loki-hostnames',
+                        action="store_true",
+                        help="Check if logs are available in Loki",)
+
+    group.add_argument('--check-loki-filenames',
                         action="store_true",
                         help="Check if logs are available in Loki",)
 
@@ -100,12 +106,20 @@ def main():
     ws_logger = logging.getLogger('websockets.protocol')
     ws_logger.setLevel(logging.WARNING)
 
-    if args.check_loki_logs:
-        check_loki_logs(
+    if args.check_loki_hostnames:
+        check_loki_hostnames(
             args.juju_cos_controller,
             args.juju_cos_model,
             args.juju_cos_user,
         )
+        return
+
+    if args.check_loki_filenames:
+        print(check_loki_logs_filenames(
+            args.juju_cos_controller,
+            args.juju_cos_model,
+            args.juju_cos_user,
+        ))
         return
 
     # Fetch Nagios services from thruk-admin API
@@ -147,8 +161,6 @@ def main():
     if args.format == 'json':
         print(show_json(diff_output))
         return
-
-    summary_output = summary(prometheus_rules.alerts())
 
     # TODO: Pretty print or json output
     if args.loglevel == logging.INFO:

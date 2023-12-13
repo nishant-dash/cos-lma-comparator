@@ -2,12 +2,9 @@ import json
 import logging
 import re
 import requests
-import grafana_api.model, grafana_api.datasource
 
 from . import juju_helper
 from .nrpedata import NRPEData
-
-from .display import print_title
 
 
 class PrometheusRule(NRPEData):
@@ -109,91 +106,6 @@ def get_traefik_endpoint(
     )
 
     return traefik_proxied_endpoints_json
-
-
-def get_grafana_pass_url(
-    juju_cos_controller,
-    juju_cos_model,
-    juju_cos_user,
-):
-    grafana_action_raw = juju_helper.juju_run_action(
-        controller_name=juju_cos_controller,
-        model_name=juju_cos_model,
-        user=juju_cos_user,
-        app_name='grafana',
-        command='get-admin-password'
-    )
-
-    first_key = list(grafana_action_raw.keys())[0]
-    results = grafana_action_raw[first_key]['results']
-
-    return (results['admin-password'], results['url'])
-
-
-def check_loki_logs(
-    juju_cos_controller,
-    juju_cos_model,
-    juju_cos_user,
-    long=False,
-):
-    hostname_labels = get_grafana_resources_label_hostname(
-        juju_cos_controller,
-        juju_cos_model,
-        juju_cos_user,
-    )
-
-    juju_machines_raw = juju_helper.juju_machines()
-    juju_machines = set(map(lambda x: x.split(':')[-1], juju_machines_raw))
-
-    extra_machines = sorted(hostname_labels - juju_machines)
-    missing_machines = sorted(juju_machines - hostname_labels)
-    common_machines = sorted(hostname_labels & juju_machines)
-
-    if missing_machines:
-        print_title("Machines missing in Loki")
-        for machine in missing_machines:
-            [ print(m) for m in juju_machines_raw if m.endswith(machine) ]
-
-    if extra_machines:
-        print_title("Extra machines Loki")
-        [ print(m) for m in extra_machines ]
-
-    print_title("Loki Logs Summary")
-    print(f"missing_loki_machines: {len(missing_machines)}")
-    print(f"extra_loki_machines: {len(extra_machines)}")
-    print(f"common_loki_machines: {len(common_machines)}")
-
-
-def get_grafana_resources_label_hostname(
-    juju_cos_controller,
-    juju_cos_model,
-    juju_cos_user,
-):
-
-    password, host = get_grafana_pass_url(
-        juju_cos_controller,
-        juju_cos_model,
-        juju_cos_user,
-    )
-
-    api_model = grafana_api.model.APIModel(
-        username = 'admin',
-        password = password,
-        host = host,
-    )
-
-    datasources = grafana_api.datasource.Datasource(api_model)
-
-    for ds in datasources.get_all_datasources():
-        if 'loki' in ds['name']:
-            query = f'api/datasources/{ds["id"]}/resources/label/hostname/values'
-            break
-
-    api = grafana_api.api.Api(api_model)
-    result = api.call_the_api(query)['data']
-
-    logging.debug(f"Hostname labels {result}")
-    return set(result)
 
 
 def get_prometheus_url(

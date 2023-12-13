@@ -137,7 +137,7 @@ def juju_controllers_models():
     print()
 
 
-def juju_machines():
+def juju_machines_and_containers():
     controllers_raw = run([juju(), "controllers", "--format", "json"],
                           stdout=PIPE, stderr=DEVNULL, text=True)
     controllers_json = json.loads(controllers_raw.stdout.strip())
@@ -169,6 +169,8 @@ def juju_machines():
                 .input(status_json) \
                 .all()
 
+            # Append <controller>:<model> to machines to improve human
+            # visibility during output
             machines.update(map(lambda m: f'{model_name}:{m}', hostnames))
             machines.update(map(lambda m: f'{model_name}:{m}', containers))
 
