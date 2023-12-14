@@ -143,13 +143,14 @@ def juju_machines_and_containers():
     controllers_json = json.loads(controllers_raw.stdout.strip())
 
     machines = set()
-
     for controller in controllers_json['controllers'].keys():
         model_raw = run([juju(), "models", "--format", "json",
                          "--controller", controller],
                         stdout=PIPE, stderr=DEVNULL, text=True)
         model_json = json.loads(model_raw.stdout.strip())
+        units = {}
         for model in model_json['models']:
+
             model_name = f"{controller}:{model['short-name']}"
             status_raw = run([juju(), "status", "--format", "json",
                               "--model", model_name],
@@ -169,12 +170,25 @@ def juju_machines_and_containers():
                 .input(status_json) \
                 .all()
 
-            # Append <controller>:<model> to machines to improve human
-            # visibility during output
-            machines.update(map(lambda m: f'{model_name}:{m}', hostnames))
-            machines.update(map(lambda m: f'{model_name}:{m}', containers))
+            machines_units = jq.compile('.applications[] \
+                                        | select(has("units")) \
+                                        | .units \
+                                        | to_entries[] \
+                                        | select(.value | has("machine")) \
+                                        | {(.value.machine): .key}') \
+                .input(status_json) \
+                .all()
+            [units.update(kv) for kv in machines_units]
 
-            # machines.update(hostnames, containers)
+
+            # Append <controller>:<model>:<unit> to machines to improve human
+            # visibility during output of missing machines
+            for m in hostnames + containers:
+                unit_key = '/'.join(m.split('-')[-3:])
+                unit_m = "_"
+                if unit_key in units:
+                    unit_m = units[unit_key]
+                machines.add(f"{model_name}:{unit_m}:{m}")
 
     logging.debug(f"Juju machines {machines}")
     return machines

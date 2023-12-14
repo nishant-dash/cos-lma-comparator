@@ -83,6 +83,7 @@ def get_grafana_datasource_resources(
         username='admin',
         password=password,
         host=host,
+        timeout=300,
     )
 
     datasources = grafana_api.datasource.Datasource(api_model)
