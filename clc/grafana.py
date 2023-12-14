@@ -13,12 +13,12 @@ def check_loki_hostnames(
     juju_cos_model,
     juju_cos_user,
 ):
-    hostname_labels = get_grafana_datasource_resources_label(
+    resources = get_grafana_datasource_resources(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
-        'hostname',
     )
+    hostname_labels = set([r['hostname'] for r in resources if 'hostname' in r])
 
     juju_machines_raw = juju_helper.juju_machines_and_containers()
     # Strip <controller>:<model> from the result
@@ -49,42 +49,15 @@ def check_loki_logs_filenames(
     juju_cos_user,
     datasource_name='loki',
 ):
-    juju_applications = get_grafana_datasource_resources_label(
-        juju_cos_controller,
-        juju_cos_model,
-        juju_cos_user,
-        'juju_application',
-    )
-
-    password, host = get_grafana_pass_url(
+    resources = get_grafana_datasource_resources(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
     )
-
-    api_model = grafana_api.model.APIModel(
-        username='admin',
-        password=password,
-        host=host,
-    )
-    api = grafana_api.api.Api(api_model)
-
-    datasources = grafana_api.datasource.Datasource(api_model)
-    for ds in datasources.get_all_datasources():
-        # Find datasource id matching datasource_name
-        if datasource_name in ds['name']:
-            datasource = ds["id"]
-            break
-
-    responses = []
-    for app in juju_applications:
-        query = f'api/datasources/{datasource}/resources/series?match[]={{juju_application="{app}"}}'
-        responses += api.call_the_api(query)['data']
-
     from collections import defaultdict
     results = defaultdict(dict)
 
-    for item in responses:
+    for item in resources:
         app = item['juju_application']
         unit = item['juju_unit']
         log = item['filename']
@@ -94,11 +67,10 @@ def check_loki_logs_filenames(
     return json.dumps(results)
 
 
-def get_grafana_datasource_resources_label(
+def get_grafana_datasource_resources(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
-    label='hostname',
     datasource_name='loki',
 ):
     password, host = get_grafana_pass_url(
@@ -117,14 +89,14 @@ def get_grafana_datasource_resources_label(
 
     for ds in datasources.get_all_datasources():
         if datasource_name in ds['name']:
-            query = f'api/datasources/{ds["id"]}/resources/label/{label}/values'
+            query = f'api/datasources/{ds["id"]}/resources/series?match[]={{}}'
             break
 
     api = grafana_api.api.Api(api_model)
     result = api.call_the_api(query)['data']
 
-    logging.debug(f"{label} labels {result}")
-    return set(result)
+    logging.debug(f"Resources {result}")
+    return result
 
 
 def get_grafana_pass_url(
