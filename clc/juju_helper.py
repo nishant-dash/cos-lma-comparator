@@ -148,8 +148,10 @@ def juju_machines_and_containers():
                          "--controller", controller],
                         stdout=PIPE, stderr=DEVNULL, text=True)
         model_json = json.loads(model_raw.stdout.strip())
-        units = {}
+
         for model in model_json['models']:
+            units = {}
+            grafana_agents = {}
 
             model_name = f"{controller}:{model['short-name']}"
             status_raw = run([juju(), "status", "--format", "json",
@@ -180,7 +182,6 @@ def juju_machines_and_containers():
                 .all()
             [units.update(kv) for kv in machines_units]
 
-
             # Append <controller>:<model>:<unit> to machines to improve human
             # visibility during output of missing machines
             for m in hostnames + containers:
@@ -189,6 +190,24 @@ def juju_machines_and_containers():
                 if unit_key in units:
                     unit_m = units[unit_key]
                 machines.add(f"{model_name}:{unit_m}:{m}")
+
+
+            logging.debug(status_json)
+
+            # Checking grafana version here to make use of controller/model
+            # loop
+            grafana_agent_version = jq.compile('.applications \
+                                               | to_entries[] \
+                                               | select(.key|test("grafana-agent")) \
+                                               | {(.key): { "rev": .value."charm-rev", "channel": .value."charm-channel" }}') \
+                .input(status_json) \
+                .all()
+            [grafana_agents.update(kv) for kv in grafana_agent_version]
+
+            for app, version in grafana_agents.items():
+                if version['rev'] < 27:
+                    logging.error("Found grafana-agent old version!!! Please update charm!")
+                    print(app, version)
 
     logging.debug(f"Juju machines {machines}")
     return machines

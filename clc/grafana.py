@@ -1,5 +1,4 @@
 import logging
-import json
 
 import grafana_api.model
 import grafana_api.datasource
@@ -43,7 +42,7 @@ def check_loki_hostnames(
     print(f"common_loki_machines: {len(common_machines)}")
 
 
-def check_loki_logs_filenames(
+def get_loki_logs_filenames(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
@@ -58,13 +57,13 @@ def check_loki_logs_filenames(
     results = defaultdict(dict)
 
     for item in resources:
-        app = item['juju_application']
-        unit = item['juju_unit']
-        log = item['filename']
+        app = item.get('juju_application', '_')
+        unit = item.get('juju_unit', '_')
+        log = item.get('filename', '_')
         results[app].setdefault(unit, []).append(log)
         results[app][unit].sort()
 
-    return json.dumps(results)
+    return results
 
 
 def get_grafana_datasource_resources(
