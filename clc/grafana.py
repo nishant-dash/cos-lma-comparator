@@ -8,6 +8,40 @@ from . import juju_helper
 from .display import print_title
 
 
+def check_loki_units(
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+    resources = get_grafana_datasource_resources(
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
+    )
+    instance_labels = set([r['instance'].split('_')[-1] for r in resources if 'instance' in r])
+
+    juju_units_raw = juju_helper.juju_units()
+    juju_units = set(map(lambda x: x.split(':')[-1], juju_units_raw))
+
+    extra_units = sorted(instance_labels - juju_units)
+    missing_units = sorted(juju_units - instance_labels)
+    common_units = sorted(instance_labels & juju_units)
+
+    if missing_units:
+        print_title("Units missing in Loki")
+        for unit in missing_units:
+            [print(u) for u in juju_units_raw if u.endswith(unit)]
+
+    if extra_units:
+        print_title("Extra units Loki")
+        [print(u) for u in extra_units]
+
+    print_title("Loki Logs Summary")
+    print(f"missing_loki_units: {len(missing_units)}")
+    print(f"extra_loki_units: {len(extra_units)}")
+    print(f"common_loki_units: {len(common_units)}")
+
+
 def check_loki_hostnames(
     juju_cos_controller,
     juju_cos_model,

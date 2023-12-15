@@ -211,3 +211,34 @@ def juju_machines_and_containers():
 
     logging.debug(f"Juju machines {machines}")
     return machines
+
+
+def juju_units():
+    controllers_raw = run([juju(), "controllers", "--format", "json"],
+                          stdout=PIPE, stderr=DEVNULL, text=True)
+    controllers_json = json.loads(controllers_raw.stdout.strip())
+
+    units = set()
+    for controller in controllers_json['controllers'].keys():
+        model_raw = run([juju(), "models", "--format", "json",
+                         "--controller", controller],
+                        stdout=PIPE, stderr=DEVNULL, text=True)
+        model_json = json.loads(model_raw.stdout.strip())
+
+        for model in model_json['models']:
+            model_name = f"{controller}:{model['short-name']}"
+            status_raw = run([juju(), "status", "--format", "json",
+                              "--model", model_name],
+                             stdout=PIPE, stderr=DEVNULL, text=True)
+
+            status_json = json.loads(status_raw.stdout.strip())
+
+            unitslist = jq.compile('.applications[] \
+                                   | select(has("units")) \
+                                   | .units \
+                                   | keys[]') \
+                .input(status_json) \
+                .all()
+
+            units.update(map(lambda u: f"{model_name}:{u}", unitslist))
+    return units
