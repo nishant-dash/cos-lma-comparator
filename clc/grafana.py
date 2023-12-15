@@ -1,4 +1,5 @@
 import logging
+import json
 
 import grafana_api.model
 import grafana_api.datasource
@@ -95,7 +96,7 @@ def get_grafana_datasource_resources(
     api = grafana_api.api.Api(api_model)
     result = api.call_the_api(query)['data']
 
-    logging.debug(f"Resources {result}")
+    logging.debug(f"Resources {json.dumps(result)}")
     return result
 
 

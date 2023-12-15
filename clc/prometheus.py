@@ -44,9 +44,13 @@ class PrometheusRule(NRPEData):
 
     def __extract_alert_state(self):
         if hasattr(self, '_alerts') and self._alerts:
-            return int(float(self._alerts[-1]["value"]))
-        else:
-            return 0
+            logging.debug(self._alerts)
+            value = self._alerts[-1]["value"]
+            try:
+                return int(float(value))
+            except:
+                return -1
+        return 0
 
     def __extract_command(self):
         extract_command = re.search('command=\"([^"]+)\",', self._query)

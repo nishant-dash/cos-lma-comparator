@@ -21,3 +21,10 @@ def test_prometheus_rule(prometheus_rules_json):
 
 def test_prometheus(prometheus_rules_json):
     assert PrometheusRules(prometheus_rules_json, "bootstack-hijk-lmn-opqrst")
+
+
+def test_prometheus_rule_alert_infinite(prometheus_rules_json):
+    rule_json = prometheus_rules_json["data"]["groups"][200]["rules"][0]
+    rule_json['alerts'] = [{'value': "+Inf"}]
+    rule = PrometheusRule(rule_json, "bootstack-hijk-lmn-opqrst")
+    assert rule.alert_state == -1
