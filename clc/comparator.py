@@ -1,3 +1,9 @@
+import logging
+
+from .nagios import get_nagios_data, NagiosServices
+from .prometheus import get_prometheus_data, PrometheusRules
+from .juju_helper import juju_config
+
 
 def compare(left_alerts, right_alerts):
     """
@@ -87,3 +93,47 @@ def summary(alerts):
         "num_rules": len(alerts),
         "num_rules_alerting": len(rules_in_error),
     }
+
+
+def check_nagios_alerts(
+    juju_lma_controller,
+    juju_lma_model,
+    juju_lma_user,
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+    nagios_context,
+    prometheus_url,
+):
+    # Fetch Nagios services from thruk-admin API
+    nagios_services_json = get_nagios_data(
+        juju_lma_controller, juju_lma_model,
+        juju_lma_user,
+    )
+
+    if not nagios_context:
+        nagios_context = juju_config(
+            juju_lma_controller,
+            juju_lma_model,
+            juju_lma_user,
+            "nagios",
+            "nagios_host_context"
+        )
+    else:
+        nagios_context = nagios_context
+
+    logging.info(f"nagios_context: {nagios_context}")
+    # Parse Nagios services to NRPE alerts
+    nagios_services = NagiosServices(nagios_services_json, nagios_context)
+
+    # Fetch Prometheus rules from Prometheus API
+    prometheus_rules_json = get_prometheus_data(
+        prometheus_url,
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
+    )
+    # Parse Prometheus services to NRPE alerts
+    prometheus_rules = PrometheusRules(prometheus_rules_json, nagios_context)
+
+    return compare(prometheus_rules.alerts(), nagios_services.alerts())
