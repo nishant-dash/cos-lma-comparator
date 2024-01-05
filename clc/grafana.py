@@ -1,5 +1,6 @@
 import logging
 import json
+import ssl
 
 import grafana_api.model
 import grafana_api.datasource
@@ -135,19 +136,56 @@ def get_grafana_datasource_resources(
 
 
 def get_grafana_pass_url(
-    juju_cos_controller,
-    juju_cos_model,
-    juju_cos_user,
+    juju_controller,
+    juju_model,
+    juju_user,
 ):
+    if 'cos' in juju_model:
+        _command = 'get-admin-password'
+        _password = 'admin-password'
+    else:
+        _command = 'get-login-info'
+        _password = 'password'
+
     grafana_action_raw = juju_helper.juju_run_action(
-        controller_name=juju_cos_controller,
-        model_name=juju_cos_model,
-        user=juju_cos_user,
+        controller_name=juju_controller,
+        model_name=juju_model,
+        user=juju_user,
         app_name='grafana',
-        command='get-admin-password'
+        command=_command,
     )
 
     first_key = list(grafana_action_raw.keys())[0]
     results = grafana_action_raw[first_key]['results']
 
-    return (results['admin-password'], results['url'])
+    return (results[_password], results['url'])
+
+def check_grafana_dashboards(
+    juju_lma_controller,
+    juju_lma_model,
+    juju_lma_user,
+    juju_cos_controller,
+    juju_cos_model,
+    juju_cos_user,
+):
+
+    password, host = get_grafana_pass_url(
+        juju_cos_controller,
+        juju_cos_model,
+        juju_cos_user,
+    )
+
+    ssl_ctx = ssl.create_default_context(
+        ssl.Purpose.SERVER_AUTH,
+        cafile="/home/jujumanage/firmus-pcb-op-237805/tls/vault_root_ca.crt"
+    )
+    ssl_ctx.verify_mode = ssl.CERT_REQUIRED
+
+    api_model = grafana_api.model.APIModel(
+        username='admin',
+        password=password,
+        host=host,
+        timeout=300,
+        ssl_context=ssl_ctx,
+    )
+
