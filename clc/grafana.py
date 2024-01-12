@@ -125,7 +125,7 @@ def get_grafana_datasource_resources(
 
     for ds in datasources.get_all_datasources():
         if datasource_name in ds['name']:
-            query = f'api/datasources/{ds["id"]}/resources/series?match[]={{}}'
+            query = f'api/datasources/{ds["id"]}/resources/series?match[]={{}}&start=1705079825534000000&end=1705083425534000000'
             break
 
     api = grafana_api.api.Api(api_model)
