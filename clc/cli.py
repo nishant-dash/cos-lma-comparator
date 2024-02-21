@@ -85,6 +85,10 @@ def parser():
                         const=logging.INFO,
                         help="Be verbose",)
 
+    parser.add_argument('--insecure',
+                       action="store_true",
+                       help="Do not check for certificate for all connections",)
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--loki-hostnames',
                        action="store_true",
@@ -121,6 +125,7 @@ def main():
             args.juju_cos_controller,
             args.juju_cos_model,
             args.juju_cos_user,
+            args.insecure,
         )
         return
 
@@ -129,6 +134,7 @@ def main():
             args.juju_cos_controller,
             args.juju_cos_model,
             args.juju_cos_user,
+            args.insecure,
         )
         return
 
@@ -139,6 +145,7 @@ def main():
                     args.juju_cos_controller,
                     args.juju_cos_model,
                     args.juju_cos_user,
+                    args.insecure,
                 ),
                 indent=2,
             )
@@ -146,7 +153,7 @@ def main():
         return
 
     if args.grafana_dashboards:
-        check_grafana_dashboards()
+        check_grafana_dashboards(args.insecure)
         return
 
     nagios_alerts_output = check_nagios_alerts(
@@ -158,6 +165,7 @@ def main():
         args.juju_cos_user,
         args.nagios_context,
         args.prometheus_url,
+        args.insecure,
     )
 
     if args.format == 'json':

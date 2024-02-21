@@ -1,6 +1,5 @@
 import logging
 import json
-import ssl
 
 import grafana_api.model
 import grafana_api.datasource
@@ -13,11 +12,13 @@ def check_loki_units(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    insecure,
 ):
     resources = get_grafana_datasource_resources(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
+        insecure,
     )
     instance_labels = set([r['instance'].split('_')[-1] for r in resources if 'instance' in r])
 
@@ -47,11 +48,13 @@ def check_loki_hostnames(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    insecure,
 ):
     resources = get_grafana_datasource_resources(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
+        insecure,
     )
     hostname_labels = set([r['hostname'] for r in resources if 'hostname' in r])
 
@@ -82,12 +85,14 @@ def get_loki_logs_filenames(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    insecure,
     datasource_name='loki',
 ):
     resources = get_grafana_datasource_resources(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
+        insecure,
     )
     from collections import defaultdict
     results = defaultdict(dict)
@@ -106,6 +111,7 @@ def get_grafana_datasource_resources(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    insecure,
     datasource_name='loki',
 ):
     password, host = get_grafana_pass_url(
@@ -120,6 +126,9 @@ def get_grafana_datasource_resources(
         host=host,
         timeout=300,
     )
+
+    if insecure:
+        api_model.ssl_context=False
 
     datasources = grafana_api.datasource.Datasource(api_model)
 
@@ -167,6 +176,7 @@ def check_grafana_dashboards(
     juju_cos_controller,
     juju_cos_model,
     juju_cos_user,
+    insecure,
 ):
 
     password, host = get_grafana_pass_url(
@@ -175,17 +185,13 @@ def check_grafana_dashboards(
         juju_cos_user,
     )
 
-    ssl_ctx = ssl.create_default_context(
-        ssl.Purpose.SERVER_AUTH,
-        cafile="/home/jujumanage/firmus-pcb-op-237805/tls/vault_root_ca.crt"
-    )
-    ssl_ctx.verify_mode = ssl.CERT_REQUIRED
-
     api_model = grafana_api.model.APIModel(
         username='admin',
         password=password,
         host=host,
         timeout=300,
-        ssl_context=ssl_ctx,
     )
+
+    if insecure:
+        api_model.ssl_context=False
 

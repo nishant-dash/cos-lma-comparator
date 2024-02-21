@@ -104,6 +104,7 @@ def check_nagios_alerts(
     juju_cos_user,
     nagios_context,
     prometheus_url,
+    insecure,
 ):
     # Fetch Nagios services from thruk-admin API
     nagios_services_json = get_nagios_data(
@@ -132,6 +133,7 @@ def check_nagios_alerts(
         juju_cos_controller,
         juju_cos_model,
         juju_cos_user,
+        insecure,
     )
     # Parse Prometheus services to NRPE alerts
     prometheus_rules = PrometheusRules(prometheus_rules_json, nagios_context)

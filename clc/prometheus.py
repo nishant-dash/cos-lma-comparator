@@ -135,6 +135,7 @@ def get_prometheus_data(
     juju_cos_controller=None,
     juju_cos_model=None,
     juju_cos_user=None,
+    insecure=False,
 ):
     """Fetch the list of all rules from the Prometheus endpoint and return it
     as a parsed dictionary.
@@ -153,7 +154,11 @@ def get_prometheus_data(
     else:
         url = prometheus_url
 
-    response = requests.get(url + "/api/v1/rules")
+    if insecure:
+        response = requests.get(url + "/api/v1/rules", verify=False)
+    else:
+        response = requests.get(url + "/api/v1/rules")
+
     if not response.ok:
         raise Exception("Unable to get rules from prometheus endpoint")
 
