@@ -31,7 +31,9 @@ class NagiosService(NRPEData):
 
         self.nagios_context = nagios_context
 
-        self.alert_identifier = self._host_display_name
+        self.alert_identifier = \
+            self._host_display_name.replace(f'{nagios_context}-', '')
+
         self.juju_unit = self.__extract_unit_name()
         self.alert_check_name = self.__extract_command()
 
